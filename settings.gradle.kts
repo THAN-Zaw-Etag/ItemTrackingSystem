@@ -12,6 +12,5 @@ dependencyResolutionManagement {
         mavenCentral()
     }
 }
-
-rootProject.name = "TestChat"
+rootProject.name = "Item Tracking System"
 include(":app")
