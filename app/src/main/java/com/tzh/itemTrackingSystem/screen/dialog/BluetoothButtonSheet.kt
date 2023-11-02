@@ -53,7 +53,7 @@ fun BluetoothBottomSheet(
     bluetoothService: BluetoothService,
     deviceList: List<BluetoothDevice>,
     dismiss: () -> Unit,
-    onConnect: (BluetoothDevice) -> Unit
+    onConnect: (String) -> Unit
 ) {
     val context = LocalContext.current
     val density = LocalDensity.current
@@ -170,7 +170,7 @@ fun BluetoothBottomSheet(
                         isScanning = false
                         bluetoothService.scanBtDevice(false)
                     }
-                    onConnect(selectedBtDevice!!)
+                    onConnect(selectedBtDevice!!.address)
                     selectedBtDevice = null
                 }) {
                     Text(text = "Connect")

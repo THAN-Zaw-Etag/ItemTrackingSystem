@@ -2,7 +2,6 @@ package com.tzh.itemTrackingSystem.service
 
 import android.annotation.SuppressLint
 import android.app.Activity
-import android.app.Application
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothGatt
@@ -14,6 +13,7 @@ import android.bluetooth.BluetoothProfile
 import android.content.Intent
 import android.util.Log
 import android.widget.Toast
+import com.tzh.itemTrackingSystem.ItemTrackingSystemApplication
 import com.tzh.itemTrackingSystem.chf301.BTClient
 import com.tzh.itemTrackingSystem.chf301.GattUpdateReceiver
 import com.tzh.itemTrackingSystem.ulti.ConnectionStatus
@@ -26,7 +26,7 @@ import java.util.TimerTask
 import java.util.UUID
 
 @SuppressLint("MissingPermission")
-class BluetoothService(private val application: Application) {
+class BluetoothService(private val application: ItemTrackingSystemApplication) {
     companion object {
         const val TAG = "BluetoothService : "
         const val REQUEST_ENABLE_BT = 101
@@ -64,8 +64,18 @@ class BluetoothService(private val application: Application) {
         displayData = ::displayData,
     )
 
-    var mOnDiscoverListener: OnDiscoverListener? = null
 
+    var mScanStateListener: MutableList<ScanStateListener> = mutableListOf()
+    fun setScanStateListener(onScanStateListener: ScanStateListener) {
+        mScanStateListener.add(onScanStateListener)
+    }
+
+    fun removeScanStateListener(onScanStateListener: ScanStateListener) {
+        mScanStateListener.remove(onScanStateListener)
+    }
+
+
+    var mOnDiscoverListener: OnDiscoverListener? = null
 
     fun setOnDiscoverListener(onDataAvailableListener: OnDiscoverListener?) {
         mOnDiscoverListener = onDataAvailableListener
@@ -119,9 +129,17 @@ class BluetoothService(private val application: Application) {
             disconnect()
             close()
         }
+        if (connectionStatus == ConnectionStatus.CONNECTED) {
+            application.sharedPreferences.apply {
+                saveDeviceAddress(mBluetoothDeviceAddress)
+            }
+        }
     }
 
     suspend fun connectBT(address: String?, connectionStateListener: ConnectionStateListener): Boolean {
+        if (!bluetoothAdapter.isEnabled) {
+            return false
+        }
         return withContext(Dispatchers.IO) {
             bluetoothConnectionState = connectionStateListener
             Log.i("BluetoothLeService:", "connect")
@@ -168,7 +186,9 @@ class BluetoothService(private val application: Application) {
 
 
     suspend fun startScan() {
-        bluetoothConnectionState?.onScanUpdate(true)
+        mScanStateListener.forEach {
+            it.onScanUpdate(true)
+        }
         withContext(Dispatchers.IO) {
             if (timer != null) {
                 return@withContext
@@ -193,7 +213,9 @@ class BluetoothService(private val application: Application) {
     }
 
     fun stopScan() {
-        bluetoothConnectionState?.onScanUpdate(false)
+        mScanStateListener.forEach {
+            it.onScanUpdate(false)
+        }
         timer?.cancel()
         timer = null
     }

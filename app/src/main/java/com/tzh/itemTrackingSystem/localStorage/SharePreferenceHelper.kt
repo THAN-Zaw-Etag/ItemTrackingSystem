@@ -5,11 +5,12 @@ import android.content.SharedPreferences
 
 class SharePreferenceHelper(context: Context) {
     val sharedPref = context.getSharedPreferences(context.packageName + LOCAL_KEY, Context.MODE_PRIVATE)
-    var prefsEditor: SharedPreferences.Editor = sharedPref.edit()
+    private var prefsEditor: SharedPreferences.Editor = sharedPref.edit()
 
     companion object {
         const val NAME_KEY = "NAME_KEY"
         const val LOCAL_KEY = "SHAREPREFERENCE_KEY"
+        const val PREVIOUS_DEVICE_ADDRESS = "PREVIOUS_DEVICE_ADDRESS"
     }
 
     fun getName(): String {
@@ -21,4 +22,13 @@ class SharePreferenceHelper(context: Context) {
         prefsEditor.apply()
     }
 
+    fun getPreviousDeviceAddress(): String? {
+//        return sharedPref.getString(PREVIOUS_DEVICE_ADDRESS, null)
+        return null
+    }
+
+    fun saveDeviceAddress(address: String?) {
+        prefsEditor.putString(PREVIOUS_DEVICE_ADDRESS, address)
+        prefsEditor.apply()
+    }
 }

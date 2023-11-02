@@ -45,7 +45,7 @@ fun PowerBottomSheet(
     val density = LocalDensity.current
     val bottomPadding = WindowInsets.navigationBars.getBottom(density).dp
     var power by remember {
-        mutableIntStateOf(26)
+        mutableIntStateOf(5)
     }
     if (isShow) {
         ModalBottomSheet(
@@ -69,7 +69,7 @@ fun PowerBottomSheet(
                     Icon(imageVector = Icons.Default.Close, contentDescription = "")
                 }
             }
-            AndroidView(
+            AndroidView<NumberPicker>(
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f),
@@ -78,11 +78,16 @@ fun PowerBottomSheet(
                         setOnValueChangedListener { numberPicker, i, newValue ->
                             power = newValue
                         }
-                        value = 26
+                        value = power
                         minValue = 5
                         maxValue = 30
                     }
                 },
+                update = { view ->
+                    view.setOnValueChangedListener { numberPicker, i, newValue ->
+                        power = newValue
+                    }
+                }
             )
             Spacer(modifier = Modifier.height(8.dp))
             Row(

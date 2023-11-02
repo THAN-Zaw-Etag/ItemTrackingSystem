@@ -1,10 +1,12 @@
 package com.tzh.itemTrackingSystem.screen.addItem
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.tzh.itemTrackingSystem.data.entity.Category
-import com.tzh.itemTrackingSystem.data.entity.Item
+import com.tzh.itemTrackingSystem.data.entity.ItemEntity
+import com.tzh.itemTrackingSystem.data.model.Item
 import com.tzh.itemTrackingSystem.data.repository.CategoryRepository
 import com.tzh.itemTrackingSystem.data.repository.ItemRepository
 import com.tzh.itemTrackingSystem.service.OnDataAvailableListener
@@ -27,8 +29,7 @@ class AddItemViewModel(private val itemRepository: ItemRepository, private val c
     val uiState = combine(categoryList, _uiState) { categories, addItemUiState ->
         val currentList = listOf(DefaultCategory) + categories
         val newState = addItemUiState.copy(
-            categoryList = currentList,
-            isSaveEnabled = addItemUiState.itemName.isNotEmpty()
+            categoryList = currentList, isSaveEnabled = addItemUiState.itemName.isNotEmpty()
         )
         newState
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(3000), AddItemUiState())
@@ -95,36 +96,36 @@ class AddItemViewModel(private val itemRepository: ItemRepository, private val c
         viewModelScope.launch {
             val data = uiState.value
 
-            val item = Item(
+            val itemEntity = ItemEntity(
                 itemName = data.itemName.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.ENGLISH) else it.toString() },
                 desc = data.itemDescription,
                 rfid = data.rfidText.ifEmpty { null },
                 categoryId = if (data.selectedCategory.id == 0) null else data.selectedCategory.id,
                 isForShop = data.isForShop
             )
-            if (data.editItem != null) {
-                if (data.rfidText == data.editItem.rfid) {
-                    itemRepository.updateItem(item.copy(id = data.editItem.id))
+            if (data.editItemEntity != null) {
+                if (data.rfidText == data.editItemEntity.rfid) {
+                    itemRepository.updateItem(itemEntity.copy(id = data.editItemEntity.id))
                 } else {
                     if (itemRepository.checkRfid(data.rfidText)) {
                         showToast("Rfid already exist .Please change to another one")
                         return@launch
                     }
-                    itemRepository.updateItem(item.copy(id = data.editItem.id))
+                    itemRepository.updateItem(itemEntity.copy(id = data.editItemEntity.id))
                 }
             } else {
                 if (itemRepository.checkRfid(data.rfidText)) {
                     showToast("Rfid already exist .Please change to another one")
                     return@launch
                 }
-                itemRepository.addItem(item)
+                itemRepository.addItem(itemEntity)
             }
             success()
         }
     }
 
-    fun setEditItem(item: Item) {
-        updateData(item)
+    fun setEditItem(itemEntity: Item) {
+        updateData(itemEntity)
     }
 
     fun resetData() {
@@ -133,17 +134,17 @@ class AddItemViewModel(private val itemRepository: ItemRepository, private val c
         }
     }
 
-    private fun updateData(editItem: Item) {
+    private fun updateData(editItemEntity: Item) {
         viewModelScope.launch {
             val currentCategory =
-                if (editItem.categoryId == null) DefaultCategory else categoryRepository.getCategory(editItem.categoryId)
+                if (editItemEntity.categoryId == null) DefaultCategory else categoryRepository.getCategory(editItemEntity.categoryId)
             _uiState.update {
                 it.copy(
-                    editItem = editItem,
-                    rfidText = editItem.rfid ?: "",
-                    itemName = editItem.itemName,
-                    itemDescription = editItem.desc ?: "",
-                    isForShop = editItem.isForShop,
+                    editItemEntity = editItemEntity,
+                    rfidText = editItemEntity.rfid ?: "",
+                    itemName = editItemEntity.itemName,
+                    itemDescription = editItemEntity.desc ?: "",
+                    isForShop = editItemEntity.isForShop,
                     selectedCategory = currentCategory
                 )
             }
@@ -163,6 +164,12 @@ class AddItemViewModel(private val itemRepository: ItemRepository, private val c
         }
     }
 
+    fun getData(id: Int) {
+        viewModelScope.launch {
+            val itemEntity = itemRepository.findItemCategoryById(id)
+            Log.e("Data", itemEntity.toString())
+        }
+    }
 
     companion object {
         class FACTORY(val repository: ItemRepository, val categoryRepository: CategoryRepository) : ViewModelProvider.Factory {
@@ -182,5 +189,5 @@ data class AddItemUiState(
     val categoryList: List<Category> = emptyList(),
     val selectedCategory: Category = DefaultCategory,
     val isSaveEnabled: Boolean = false,
-    val editItem: Item? = null
+    val editItemEntity: Item? = null
 )

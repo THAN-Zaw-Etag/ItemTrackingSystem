@@ -8,12 +8,14 @@ import androidx.lifecycle.LifecycleOwner
 
 @Composable
 fun ControlBluetoothLifecycle(
-    lifecycleOwner: LifecycleOwner, onCreate: () -> Unit, onPause: () -> Unit, onDestroy: () -> Unit = {}
+    lifecycleOwner: LifecycleOwner, onCreate: () -> Unit, onResume: () -> Unit, onPause: () -> Unit, onDestroy: () -> Unit = {}
 ) {
     DisposableEffect(key1 = lifecycleOwner) {
         val lifecycleEventObserver = LifecycleEventObserver { source, event ->
             when (event) {
                 Lifecycle.Event.ON_CREATE -> onCreate()
+
+                Lifecycle.Event.ON_RESUME -> onResume()
 
                 Lifecycle.Event.ON_PAUSE -> onPause()
 

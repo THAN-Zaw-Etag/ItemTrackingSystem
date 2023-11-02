@@ -1,4 +1,4 @@
-package com.tzh.itemTrackingSystem.dialog
+package com.tzh.itemTrackingSystem.screen.dialog
 
 import android.bluetooth.BluetoothDevice
 import androidx.compose.runtime.Composable
@@ -12,7 +12,7 @@ import kotlinx.coroutines.withContext
 
 @Composable
 fun StartConnecting(
-    selectedBtDevice: BluetoothDevice?,
+    selectedBtDevice: String?,
     bluetoothService: BluetoothService,
     viewModel: MainViewModel,
     showToast: (String) -> Unit,
@@ -29,7 +29,7 @@ fun StartConnecting(
                 var count = 0
                 while (true) {
                     bluetoothService.connectBT(
-                        selectedBtDevice.address, connectionStateListener = viewModel
+                        selectedBtDevice, connectionStateListener = viewModel
                     )
                     delay(2000)
                     count++

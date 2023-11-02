@@ -22,13 +22,12 @@ import com.tzh.itemTrackingSystem.ulti.Extensions.requestPermission
 @ExperimentalMaterial3Api
 class MainActivity : ComponentActivity() {
 
-    lateinit var sharedPreferences: SharePreferenceHelper
 
     companion object {
         val REQUEST_BT_PERMISSION = 100
     }
 
-
+    lateinit var sharedPreferences: SharePreferenceHelper
     val application: ItemTrackingSystemApplication by lazy { applicationContext as ItemTrackingSystemApplication }
 
     val bluetoothService by lazy { application.bluetoothService }
@@ -50,7 +49,7 @@ class MainActivity : ComponentActivity() {
         (applicationContext as Application).requestPermission(this)
         startMyService()
         bluetoothService.openBluetooth(this)
-        sharedPreferences = SharePreferenceHelper(this)
+        sharedPreferences = application.sharedPreferences
         mainToast = Toast.makeText(this, "", Toast.LENGTH_LONG)
         setContent {
             TestChatApp()
@@ -61,10 +60,9 @@ class MainActivity : ComponentActivity() {
     @Composable
     private fun TestChatApp() {
         TestChatTheme {
-
-
             MainScreen(
                 mainViewModel = viewModel, bluetoothService = bluetoothService, application,
+                previousBTAddress = sharedPreferences.getPreviousDeviceAddress(),
                 showToast = {
                     showToast(it)
                 },

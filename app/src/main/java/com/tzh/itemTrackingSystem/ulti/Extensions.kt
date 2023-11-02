@@ -104,4 +104,17 @@ object Extensions {
             "Device Name :\t" + (deviceName ?: "-") + "\nConnection Status :\t" + "Disconnected"
         }
     }
+
+    fun Boolean?.toFilterCardId() = when (this) {
+        null -> 0
+        true -> 1
+        false -> 2
+    }
+
+    fun Int.cardIdToIsForShop() = when (this) {
+        0 -> null
+        1 -> true
+        2 -> false
+        else -> null
+    }
 }

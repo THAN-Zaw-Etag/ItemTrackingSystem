@@ -14,8 +14,10 @@ fun DeviceConnectionText(text: String, modifier: Modifier = Modifier) {
     Text(
         text = text, style = MaterialTheme.typography.headlineSmall.copy(
             fontSize = 16.sp,
-            color = Color.Green,
-            fontWeight = FontWeight.Bold,
+            color = Color.Magenta.copy(
+                alpha = 0.6f
+            ),
+            fontWeight = FontWeight.ExtraBold,
             textAlign = TextAlign.Justify,
         ), modifier = modifier
     )

@@ -7,18 +7,24 @@ import androidx.room.RoomDatabase
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.tzh.itemTrackingSystem.data.dao.CategoryDao
 import com.tzh.itemTrackingSystem.data.dao.ItemDao
+import com.tzh.itemTrackingSystem.data.dao.PlanDao
 import com.tzh.itemTrackingSystem.data.entity.Category
-import com.tzh.itemTrackingSystem.data.entity.Item
+import com.tzh.itemTrackingSystem.data.entity.ItemEntity
+import com.tzh.itemTrackingSystem.data.entity.ItemPlanEntity
+import com.tzh.itemTrackingSystem.data.entity.PlanEntity
 import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
 
 
-@Database(entities = [Item::class, Category::class], version = 2, exportSchema = true)
+@Database(
+    entities = [ItemEntity::class, Category::class, PlanEntity::class, ItemPlanEntity::class],
+    version = 4,
+    exportSchema = true
+)
 abstract class AppDatabase : RoomDatabase() {
 
     abstract fun getItemDao(): ItemDao
     abstract fun getCategoryDao(): CategoryDao
+    abstract fun getPlanDao(): PlanDao
 
     companion object {
         @Volatile
@@ -31,23 +37,23 @@ abstract class AppDatabase : RoomDatabase() {
                     applicationContext, AppDatabase::class.java, "ItemTrackingSystemDataBase"
                 ).fallbackToDestructiveMigration().addCallback(object : Callback() {
                     override fun onCreate(db: SupportSQLiteDatabase) {
-                        super.onCreate(db)
-                        //check for null
-
-                        val item = Item(
-                            itemName = "Number 1",
-                        )
-                        val item2 = item.copy(
-                            itemName = "Number 2"
-                        )
-                        val item3 = item.copy(
-                            itemName = "Number 3"
-                        )
-                        GlobalScope.launch {
-                            INSTANCE?.getItemDao()?.addItem(item)
-                            INSTANCE?.getItemDao()?.addItem(item2)
-                            INSTANCE?.getItemDao()?.addItem(item3)
-                        }
+//                        super.onCreate(db)
+//                        //check for null
+//
+//                        val itemEntity = ItemEntity(
+//                            itemName = "Number 1",
+//                        )
+//                        val item2 = itemEntity.copy(
+//                            itemName = "Number 2"
+//                        )
+//                        val item3 = itemEntity.copy(
+//                            itemName = "Number 3"
+//                        )
+//                        GlobalScope.launch {
+////                            INSTANCE?.getItemDao()?.addItem(itemEntity)
+////                            INSTANCE?.getItemDao()?.addItem(item2)
+////                            INSTANCE?.getItemDao()?.addItem(item3)
+//                        }
                     }
                 }).build()
 

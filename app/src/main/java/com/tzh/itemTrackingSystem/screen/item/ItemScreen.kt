@@ -1,6 +1,8 @@
 package com.tzh.itemTrackingSystem.screen.item
 
 import android.widget.Toast
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -8,16 +10,20 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyItemScope
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -45,10 +51,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tzh.itemTrackingSystem.R
-import com.tzh.itemTrackingSystem.data.entity.Item
+import com.tzh.itemTrackingSystem.data.model.Item
 import com.tzh.itemTrackingSystem.data.repository.ItemRepository
 import com.tzh.itemTrackingSystem.screen.common.ControlBluetoothLifecycle
 import com.tzh.itemTrackingSystem.screen.common.SearchView
+import com.tzh.itemTrackingSystem.screen.dialog.ItemFilterDialog
 import com.tzh.itemTrackingSystem.service.BluetoothService
 import com.tzh.itemTrackingSystem.ui.theme.RFIDTextColor
 
@@ -59,57 +66,119 @@ fun ItemScreen(
     bluetoothService: BluetoothService,
     itemRepository: ItemRepository,
     viewModel: ItemViewModel = viewModel(factory = ItemViewModel.Companion.FACTORY(itemRepository)),
-    editItem: (Item) -> Unit
+    editItem: (Item) -> Unit,
+    onClick: (Item) -> Unit
 ) {
     ControlBluetoothLifecycle(
         LocalLifecycleOwner.current,
         onCreate = {
+
+        },
+        onResume = {
+            bluetoothService.setScanStateListener(viewModel)
             bluetoothService.setOnDataAvailableListener(viewModel)
         },
         onPause = {
             bluetoothService.removeOnDataAvailableListener()
+            bluetoothService.removeScanStateListener(viewModel)
         },
     )
     val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsState()
-    val itemList = uiState.list
+    val categoryList = viewModel.categoryList
+    val itemList = viewModel.itemList
+    var showFilter by remember {
+        mutableStateOf(false)
+    }
+    if (showFilter) {
+        ItemFilterDialog(
+            isForShop = uiState.isForShop,
+            category = uiState.filterCategory,
+            categoryList = categoryList,
+            dismiss = { showFilter = false },
+            filter = { category, isForShop ->
+                showFilter = false
+                viewModel.updateFilterItem(category, isForShop)
+            },
+        )
+    }
+
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             SearchView(modifier = Modifier.weight(1f), defaultValue = uiState.searchText, label = "Search Item") {
                 viewModel.updateSearchText(it)
             }
             IconButton(onClick = {
-
+                showFilter = true
             }) {
                 Image(painter = painterResource(id = R.drawable.filter), contentDescription = "Filter")
             }
         }
-        LazyColumn(modifier = Modifier.weight(1f)) {
-            items(itemList.size, key = { index -> itemList[index].id }) { index ->
-
-                CardItem(
-                    item = itemList[index], delete = {
-                        viewModel.deleteItem(
-                            it.id,
-                            successListener = {
-                                Toast.makeText(context, "Successfully delete", Toast.LENGTH_LONG).show()
-                            },
-                            showToast = {
-                                Toast.makeText(context, it, Toast.LENGTH_LONG).show()
-                            },
-                        )
-                    }, editItem = editItem
+        if (uiState.isLoading) {
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = "Getting data please wait....", style = MaterialTheme.typography.headlineSmall.copy(
+                        color = Color.Red, fontFamily = FontFamily.Serif, letterSpacing = 4.sp, textAlign = TextAlign.Center
+                    )
                 )
+                CircularProgressIndicator(
+                    modifier = Modifier.padding(top = 24.dp)
+                )
+            }
+        }
+
+        AnimatedVisibility(modifier = Modifier.weight(1f), visible = !uiState.isLoading) {
+            if (itemList.isEmpty()) {
+                Column(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center) {
+                    Text(
+                        modifier = Modifier.fillMaxWidth(),
+                        text = "No data not found",
+                        style = MaterialTheme.typography.headlineSmall.copy(
+                            color = Color.Red, fontFamily = FontFamily.Serif, letterSpacing = 4.sp, textAlign = TextAlign.Center
+                        )
+                    )
+                }
+            } else {
+                LazyColumn(modifier = Modifier.fillMaxSize()) {
+                    items(itemList, key = { item -> item.id }) { item: Item ->
+                        CardItem(itemEntity = item, delete = {
+                            viewModel.deleteItem(
+                                it.id,
+                                successListener = {
+                                    Toast.makeText(context, "Successfully delete", Toast.LENGTH_LONG).show()
+                                },
+                                showToast = {
+                                    Toast.makeText(context, it, Toast.LENGTH_LONG).show()
+                                },
+                            )
+                        }, editItem = editItem, onClick = {
+                            onClick(item)
+                        })
+                    }
+                }
             }
         }
     }
 }
 
-@OptIn(ExperimentalFoundationApi::class)
+@OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
 @Composable
-private fun LazyItemScope.CardItem(item: Item, delete: (Item) -> Unit, editItem: (Item) -> Unit) {
+private fun LazyItemScope.CardItem(itemEntity: Item, delete: (Item) -> Unit, editItem: (Item) -> Unit, onClick: () -> Unit) {
 
     var deleteId: Int? by remember { mutableStateOf(null) }
+    val backgroundColor by animateColorAsState(
+        targetValue = if (itemEntity.isScan) {
+            Color.Green.copy(alpha = .2f)
+        } else {
+            CardDefaults.cardColors().containerColor
+        },
+
+        label = "bgColor"
+    )
     if (deleteId != null) {
         AlertDialog(
             icon = { Icon(imageVector = Icons.Default.Notifications, contentDescription = "Delete Alert") },
@@ -120,16 +189,33 @@ private fun LazyItemScope.CardItem(item: Item, delete: (Item) -> Unit, editItem:
                 }
             },
             confirmButton = {
-                ElevatedButton(onClick = { delete(item) }) {
+                ElevatedButton(onClick = { delete(itemEntity) }) {
                     Text(text = "Confirm")
                 }
 
             },
-            text = { Text(text = "Are you sure want to delete this item : ${item.itemName}") },
+            text = {
+                Text(
+                    buildAnnotatedString {
+
+                        val defaultStyle = MaterialTheme.typography.bodyMedium
+                        withStyle(defaultStyle.toSpanStyle()) {
+                            append("Are you sure want to delete this item : ")
+                        }
+                        withStyle(
+                            defaultStyle.toSpanStyle().copy(
+                                fontWeight = FontWeight.Bold,
+                            )
+                        ) {
+                            append(itemEntity.itemName)
+                        }
+                    },
+                )
+            },
             title = { Text(text = "Confirm !", color = Color.Red) },
         )
     }
-    
+
     Card(
         modifier = Modifier
             .animateItemPlacement(
@@ -139,7 +225,7 @@ private fun LazyItemScope.CardItem(item: Item, delete: (Item) -> Unit, editItem:
                 )
             )
             .padding(8.dp)
-            .fillMaxWidth()
+            .fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = backgroundColor), onClick = onClick
     ) {
         Row(
             modifier = Modifier
@@ -150,14 +236,14 @@ private fun LazyItemScope.CardItem(item: Item, delete: (Item) -> Unit, editItem:
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(4.dp), modifier = Modifier.weight(1f)) {
                 Text(
-                    text = item.itemName, style = MaterialTheme.typography.headlineSmall.copy(
+                    text = itemEntity.itemName, style = MaterialTheme.typography.headlineSmall.copy(
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold,
                         textAlign = TextAlign.Justify,
                     ), modifier = Modifier.fillMaxWidth()
                 )
                 Text(
-                    text = (item.desc ?: "-").ifEmpty { "-" }, style = MaterialTheme.typography.bodyMedium.copy(
+                    text = (itemEntity.desc ?: "-").ifEmpty { "-" }, style = MaterialTheme.typography.bodyMedium.copy(
                         textAlign = TextAlign.Justify,
                     ), modifier = Modifier.fillMaxWidth()
                 )
@@ -176,7 +262,7 @@ private fun LazyItemScope.CardItem(item: Item, delete: (Item) -> Unit, editItem:
                         withStyle(
                             style.copy().toSpanStyle()
                         ) {
-                            append((item.rfid ?: "-").ifEmpty { "-" })
+                            append((itemEntity.rfid ?: "-").ifEmpty { "-" })
                         }
                     }, style = MaterialTheme.typography.bodyMedium.copy(
                         textAlign = TextAlign.Justify,
@@ -185,12 +271,12 @@ private fun LazyItemScope.CardItem(item: Item, delete: (Item) -> Unit, editItem:
             }
             Column(modifier = Modifier, verticalArrangement = Arrangement.SpaceEvenly) {
                 IconButton(
-                    onClick = { deleteId = item.id },
+                    onClick = { deleteId = itemEntity.id },
                 ) {
-                    Icon(imageVector = Icons.Default.Delete, contentDescription = "Delete", tint = Color.Red.copy(alpha = .8f))
+                    Icon(imageVector = Icons.Default.Delete, contentDescription = "Delete", tint = Color.Red.copy(alpha = .4f))
                 }
                 IconButton(
-                    onClick = { editItem(item) },
+                    onClick = { editItem(itemEntity) },
                 ) {
                     Icon(imageVector = Icons.Default.Edit, contentDescription = "Delete", tint = Color.DarkGray.copy(alpha = .8f))
                 }

@@ -2,31 +2,27 @@ package com.tzh.itemTrackingSystem.screen.main
 
 import android.bluetooth.BluetoothDevice
 import android.util.Log
-import androidx.compose.runtime.mutableStateListOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.tzh.itemTrackingSystem.service.BluetoothService
 import com.tzh.itemTrackingSystem.service.ConnectionStateListener
 import com.tzh.itemTrackingSystem.service.OnDiscoverListener
+import com.tzh.itemTrackingSystem.service.ScanStateListener
 import com.tzh.itemTrackingSystem.ulti.ConnectionStatus
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class MainViewModel : ViewModel(), ConnectionStateListener,
-    OnDiscoverListener {
-
+    OnDiscoverListener, ScanStateListener {
 
     private val bluetoothDeviceList = mutableListOf<BluetoothDevice>()
     val btDeviceList = MutableStateFlow<List<BluetoothDevice>>(listOf())
     val connectionStatus = MutableStateFlow(ConnectionStatus.DISCONNECTED)
-
     val connectedDeviceName = MutableStateFlow<String?>(null)
-
     val isScanning = MutableStateFlow(false)
 
-    val rfidScanList = mutableStateListOf<String>()
 
     fun toggleScan(bluetoothService: BluetoothService, showToast: (String) -> Unit) {
         if (connectionStatus.value != ConnectionStatus.CONNECTED) {
@@ -42,7 +38,6 @@ class MainViewModel : ViewModel(), ConnectionStateListener,
 
     fun startScan(bluetoothService: BluetoothService) {
         viewModelScope.launch {
-            rfidScanList.clear()
             bluetoothService.startScan()
 //            updateScanStatus()
         }

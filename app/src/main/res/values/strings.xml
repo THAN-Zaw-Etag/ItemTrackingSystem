@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">Item Tracking System</string>
+    <string name="app_name_shortcut">ITSystem</string>
 </resources>

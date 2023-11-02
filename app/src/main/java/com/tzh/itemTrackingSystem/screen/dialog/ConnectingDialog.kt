@@ -1,6 +1,5 @@
 package com.tzh.itemTrackingSystem.screen.dialog
 
-import android.bluetooth.BluetoothDevice
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -18,7 +17,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 
 @Composable
-fun ConnectingDialog(isShow: Boolean, selectedBtDevice: BluetoothDevice?) {
+fun ConnectingDialog(isShow: Boolean, selectedBtDevice: String?) {
 
     if (isShow) {
         Dialog(
@@ -33,7 +32,7 @@ fun ConnectingDialog(isShow: Boolean, selectedBtDevice: BluetoothDevice?) {
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     modifier = Modifier.padding(8.dp),
-                    text = "Connecting the bluetooth device to :\n${selectedBtDevice?.address}",
+                    text = "Connecting the bluetooth device to :\n${selectedBtDevice}",
                     textAlign = TextAlign.Center
                 )
             }

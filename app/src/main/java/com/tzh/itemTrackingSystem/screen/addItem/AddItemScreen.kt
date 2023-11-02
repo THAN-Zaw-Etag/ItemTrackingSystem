@@ -45,6 +45,9 @@ fun AddItemScreen(
     ControlBluetoothLifecycle(
         LocalLifecycleOwner.current,
         onCreate = {
+
+        },
+        onResume = {
             bluetoothService.setOnDataAvailableListener(itemViewModel)
         },
         onPause = {
@@ -82,7 +85,7 @@ fun AddItemScreen(
             .fillMaxSize()
             .padding(8.dp)
     ) {
-        TitleText(if (uiState.editItem == null) "ADD ITEM" else "EDIT ITEM", modifier = Modifier.fillMaxWidth())
+        TitleText(if (uiState.editItemEntity == null) "ADD ITEM" else "EDIT ITEM", modifier = Modifier.fillMaxWidth())
         TextFieldWithTitle(title = "Item Name", value = uiState.itemName) { text ->
             itemViewModel.updateItemName(text)
         }
@@ -116,7 +119,7 @@ fun AddItemScreen(
             horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "Is this Item for shop", style = MaterialTheme.typography.bodyMedium.copy(
+                text = "For shop", style = MaterialTheme.typography.bodyMedium.copy(
                     textAlign = TextAlign.Justify, fontFamily = FontFamily.Serif, fontWeight = FontWeight.Bold
                 )
             )
@@ -127,7 +130,7 @@ fun AddItemScreen(
                     itemViewModel.addItem(showToast = {
                         Toast.makeText(context, it, Toast.LENGTH_LONG).show()
                     }, success = {
-                        if (uiState.editItem != null) {
+                        if (uiState.editItemEntity != null) {
                             Toast.makeText(context, "Successfully edited", Toast.LENGTH_LONG).show()
                         } else {
                             Toast.makeText(context, "Successfully Added", Toast.LENGTH_LONG).show()
