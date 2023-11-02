@@ -26,7 +26,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import com.tzh.itemTrackingSystem.ItemTrackingSystemApplication
 import com.tzh.itemTrackingSystem.screen.common.ControlBluetoothLifecycle
 import com.tzh.itemTrackingSystem.screen.common.MyAppDropDown
 import com.tzh.itemTrackingSystem.screen.common.RFIDTextFieldWithTitle
@@ -37,7 +36,7 @@ import com.tzh.itemTrackingSystem.ui.theme.RFIDTextColor
 
 @Composable
 fun AddItemScreen(
-    application: ItemTrackingSystemApplication, bluetoothService: BluetoothService,
+    bluetoothService: BluetoothService,
     itemViewModel: AddItemViewModel,
     navController: NavController,
 ) {

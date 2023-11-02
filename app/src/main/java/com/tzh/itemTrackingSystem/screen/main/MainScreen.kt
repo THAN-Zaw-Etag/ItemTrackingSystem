@@ -297,7 +297,7 @@ fun MainScreen(
                     composable(ROUTE.AddItem) {
                         currentRoute = ROUTE.AddItem
                         Log.e("ROUTE is ", ROUTE.AddItem)
-                        AddItemScreen(application, bluetoothService, itemViewModel, navController = navController)
+                        AddItemScreen(bluetoothService, itemViewModel, navController = navController)
                     }
 
                     composable(ROUTE.AddCategory) {
