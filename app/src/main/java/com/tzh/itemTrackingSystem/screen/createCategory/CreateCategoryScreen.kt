@@ -1,6 +1,5 @@
 package com.tzh.itemTrackingSystem.screen.createCategory
 
-import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
@@ -18,6 +17,7 @@ import androidx.compose.ui.unit.dp
 import com.tzh.itemTrackingSystem.data.entity.Category
 import com.tzh.itemTrackingSystem.screen.common.TextFieldWithTitle
 import com.tzh.itemTrackingSystem.screen.common.TitleText
+import com.tzh.itemTrackingSystem.ulti.Extensions.showToast
 import java.util.Locale
 
 @Composable
@@ -46,7 +46,7 @@ fun CreateCategoryScreen(save: (Category) -> Unit) {
 
         ElevatedButton(onClick = {
             if (categoryName.isEmpty()) {
-                Toast.makeText(context, "Please enter categoryName", Toast.LENGTH_LONG).show()
+                context.showToast("Please enter categoryName")
                 return@ElevatedButton
             }
             save(

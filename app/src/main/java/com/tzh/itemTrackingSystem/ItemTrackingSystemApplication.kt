@@ -1,6 +1,7 @@
 package com.tzh.itemTrackingSystem
 
 import android.app.Application
+import com.tzh.itemTrackingSystem.chf301.BTClient
 import com.tzh.itemTrackingSystem.data.AppDatabase
 import com.tzh.itemTrackingSystem.data.repository.CategoryRepository
 import com.tzh.itemTrackingSystem.data.repository.ItemRepository
@@ -21,6 +22,8 @@ class ItemTrackingSystemApplication : Application() {
     override fun onCreate() {
         super.onCreate()
         bluetoothService = BluetoothService(this)
+
+        BTClient.mBluetoothLeService = bluetoothService
         sharedPreferences = SharePreferenceHelper(this)
         appDatabase = AppDatabase.getInstance(this)
         itemRepository = ItemRepository(appDatabase.getItemDao())

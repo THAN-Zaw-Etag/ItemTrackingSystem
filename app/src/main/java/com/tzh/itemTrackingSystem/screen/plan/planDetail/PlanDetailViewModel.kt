@@ -16,11 +16,11 @@ import com.tzh.itemTrackingSystem.service.OnDataAvailableListener
 import com.tzh.itemTrackingSystem.service.ScanStateListener
 import com.tzh.itemTrackingSystem.ulti.SaveResult
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -28,33 +28,52 @@ class PlanDetailViewModel(
     val planId: Int, private val planRepository: PlanRepository, private val itemRepository: ItemRepository
 ) : ViewModel(), OnDataAvailableListener, ScanStateListener {
 
-    var itemList = mutableStateListOf<Item>()
+    //    var itemList = mutableStateListOf<Item>()
     var planItems = mutableStateListOf<Item>()
     private val rfidScanList = mutableStateListOf<String>()
-
     private val _uiState = MutableStateFlow(PlanDetailUiState())
-    val uiState: StateFlow<PlanDetailUiState> get() = _uiState.asStateFlow()
 
-    init {
-        planRepository.getAllItemByPlanId(planId).onEach {
-            val list = it.map { item -> item.toItemMapper() }.toMutableStateList()
-            planItems.clear()
-            planItems.addAll(list)
-        }.launchIn(viewModelScope)
-        viewModelScope.launch {
-            itemRepository.getItemList().collectLatest {
-                itemList = it.map { item ->
-                    if (item.categoryId == null) {
-                        item.toItemMapper()
-                    } else {
-                        val category = itemRepository.getCategoryById(item.categoryId)
-                        item.toItemMapper().copy(
-                            categoryName = category.categoryName
-                        )
-                    }
-                }.toMutableStateList()
+    val uiState = combine(
+        _uiState, planRepository.getAllItemByPlanId(planId), itemRepository.getAllItemsCategory()
+    ) { state, planItemList, items ->
+        val mPlanItemList = planItemList.map { item -> item.toItemMapper() }
+        val itemList = items.map { item ->
+            item.itemEntity.toItemMapper().apply {
+                categoryName = item.categoryName ?: ""
+                Log.e("a[[[[[]]]]]]]", item.itemEntity.toString())
             }
         }
+        Log.e("ASDASDASDASDASD", itemList.toString())
+        val newState = state.copy(
+            planItemList = mPlanItemList, itemList = itemList
+        )
+        planItems = newState.planItemList.toMutableStateList()
+        return@combine newState
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(3000), PlanDetailUiState())
+
+    init {
+
+//        viewModelScope.launch {
+//            planRepository.getAllItemByPlanId(planId).collectLatest {
+//                val list = it.map { item -> item.toItemMapper() }.toMutableStateList()
+//                planItems.clear()
+//                planItems.addAll(list)
+//            }
+//        }
+//        viewModelScope.launch {
+//            itemRepository.getItemList().collectLatest {
+//                itemList = it.map { item ->
+//                    if (item.categoryId == null) {
+//                        item.toItemMapper()
+//                    } else {
+//                        val category = itemRepository.getCategoryById(item.categoryId)
+//                        item.toItemMapper().copy(
+//                            categoryName = category.categoryName
+//                        )
+//                    }
+//                }.toMutableStateList()
+//            }
+//        }
     }
 
     fun showAddItemScreen(isShow: Boolean) {
@@ -124,17 +143,24 @@ class PlanDetailViewModel(
             rfidList.forEach { rfid ->
                 if (!rfidScanList.contains(rfid)) {
                     rfidScanList.add(rfid)
-                    planItems.forEach { item ->
-                        if (item.rfid == rfid) {
-                            val iIndex = planItems.indexOf(item)
-                            val mItem = planItems[iIndex].copy()
-                            mItem.isScan = true
-                            planItems[iIndex] = mItem
-                            if (!mediaPlayer.isPlaying) {
-                                mediaPlayer.start()
-                            }
+//                    planItems.forEach { item ->
+//                        if (item.rfid == rfid) {
+//                            val iIndex = planItems.indexOf(item)
+//                            val mItem = planItems[iIndex].copy()
+//                            mItem.isScan = true
+//                            planItems[iIndex] = mItem
+//                            if (!mediaPlayer.isPlaying) {
+//                                mediaPlayer.start()
+//                            }
+//                        }
+//                    }
+                    planItems.find { it.rfid == rfid }?.let {
+                        it.isScan = true
+                        if (!mediaPlayer.isPlaying) {
+                            mediaPlayer.start()
                         }
                     }
+
                     _uiState.update { currentState ->
                         currentState.copy()
                     }
@@ -148,10 +174,10 @@ class PlanDetailViewModel(
         if (isScan) {
             rfidScanList.clear()
             planItems.forEach { item ->
-                val iIndex = planItems.indexOf(item)
-                val mItem = planItems[iIndex].copy()
-                mItem.isScan = false
-                planItems[iIndex] = mItem
+//                val iIndex = planItems.indexOf(item)
+//                val mItem = planItems[iIndex].copy()
+                item.isScan = false
+//                planItems[iIndex] = mItem
             }
             _uiState.update { currentState ->
                 currentState.copy()
@@ -178,4 +204,6 @@ data class PlanDetailUiState(
     val errorMessage: String = "",
     val isSuccess: Boolean = false,
     val isShowAddItemScreen: Boolean = false,
+    val planItemList: List<Item> = emptyList(),
+    val itemList: List<Item> = emptyList()
 )

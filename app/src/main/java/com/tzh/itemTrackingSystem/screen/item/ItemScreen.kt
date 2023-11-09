@@ -1,6 +1,5 @@
 package com.tzh.itemTrackingSystem.screen.item
 
-import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.LinearOutSlowInEasing
@@ -58,6 +57,7 @@ import com.tzh.itemTrackingSystem.screen.common.SearchView
 import com.tzh.itemTrackingSystem.screen.dialog.ItemFilterDialog
 import com.tzh.itemTrackingSystem.service.BluetoothService
 import com.tzh.itemTrackingSystem.ui.theme.RFIDTextColor
+import com.tzh.itemTrackingSystem.ulti.Extensions.showToast
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -79,6 +79,7 @@ fun ItemScreen(
             bluetoothService.setOnDataAvailableListener(viewModel)
         },
         onPause = {
+            bluetoothService.stopScan()
             bluetoothService.removeOnDataAvailableListener()
             bluetoothService.removeScanStateListener(viewModel)
         },
@@ -149,10 +150,10 @@ fun ItemScreen(
                             viewModel.deleteItem(
                                 it.id,
                                 successListener = {
-                                    Toast.makeText(context, "Successfully delete", Toast.LENGTH_LONG).show()
+                                    context.showToast("Successfully delete")
                                 },
                                 showToast = {
-                                    Toast.makeText(context, it, Toast.LENGTH_LONG).show()
+                                    context.showToast(it)
                                 },
                             )
                         }, editItem = editItem, onClick = {

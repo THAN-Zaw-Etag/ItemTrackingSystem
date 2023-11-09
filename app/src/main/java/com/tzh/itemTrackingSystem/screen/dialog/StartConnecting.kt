@@ -1,10 +1,9 @@
 package com.tzh.itemTrackingSystem.screen.dialog
 
-import android.bluetooth.BluetoothDevice
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import com.tzh.itemTrackingSystem.screen.main.MainViewModel
 import com.tzh.itemTrackingSystem.service.BluetoothService
+import com.tzh.itemTrackingSystem.service.ConnectionStateListener
 import com.tzh.itemTrackingSystem.ulti.ConnectionStatus
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -14,7 +13,8 @@ import kotlinx.coroutines.withContext
 fun StartConnecting(
     selectedBtDevice: String?,
     bluetoothService: BluetoothService,
-    viewModel: MainViewModel,
+    connectionStateListener: ConnectionStateListener,
+    connectionStatus: ConnectionStatus,
     showToast: (String) -> Unit,
     onDone: () -> Unit
 ) {
@@ -22,14 +22,14 @@ fun StartConnecting(
         if (selectedBtDevice != null) {
             bluetoothService.scanBtDevice(false)
             withContext(Dispatchers.IO) {
-                if (viewModel.connectionStatus.value == ConnectionStatus.CONNECTED) {
+                if (connectionStatus == ConnectionStatus.CONNECTED) {
                     bluetoothService.disconnect()
                     bluetoothService.close()
                 }
                 var count = 0
                 while (true) {
                     bluetoothService.connectBT(
-                        selectedBtDevice, connectionStateListener = viewModel
+                        selectedBtDevice, connectionStateListener = connectionStateListener
                     )
                     delay(2000)
                     count++

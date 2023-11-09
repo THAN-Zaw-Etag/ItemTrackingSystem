@@ -1,86 +1,60 @@
 package com.tzh.itemTrackingSystem
 
-import android.app.Application
+import android.annotation.SuppressLint
 import android.content.Intent
 import android.content.IntentFilter
 import android.os.Bundle
-import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
 import androidx.core.view.WindowCompat
-import com.tzh.itemTrackingSystem.chf301.BTClient
-import com.tzh.itemTrackingSystem.localStorage.SharePreferenceHelper
 import com.tzh.itemTrackingSystem.screen.main.MainScreen
 import com.tzh.itemTrackingSystem.screen.main.MainViewModel
 import com.tzh.itemTrackingSystem.service.BluetoothService
-import com.tzh.itemTrackingSystem.ui.theme.TestChatTheme
+import com.tzh.itemTrackingSystem.ui.theme.ItemTrackingSystemTheme
 import com.tzh.itemTrackingSystem.ulti.Extensions.requestPermission
+import com.tzh.itemTrackingSystem.ulti.Extensions.showToast
 
 @ExperimentalMaterial3Api
 class MainActivity : ComponentActivity() {
 
-
     companion object {
-        val REQUEST_BT_PERMISSION = 100
+        const val REQUEST_BT_PERMISSION = 100
     }
 
-    lateinit var sharedPreferences: SharePreferenceHelper
-    val application: ItemTrackingSystemApplication by lazy { applicationContext as ItemTrackingSystemApplication }
-
-    val bluetoothService by lazy { application.bluetoothService }
-
-    lateinit var mainToast: Toast
-    fun showToast(msg: String) {
-        mainToast.setText(msg)
-        mainToast.show()
+    private val application: ItemTrackingSystemApplication by lazy {
+        applicationContext as ItemTrackingSystemApplication
     }
-
-    val viewModel: MainViewModel by viewModels {
-        MainViewModel.Companion.FACTORY()
+    private val bluetoothService by lazy {
+        application.bluetoothService
     }
+    private val mainViewModel: MainViewModel by viewModels { MainViewModel.Companion.FACTORY(application) }
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        WindowCompat.setDecorFitsSystemWindows(window, false)
-        BTClient.mBluetoothLeService = bluetoothService
-        (applicationContext as Application).requestPermission(this)
         startMyService()
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+        application.requestPermission(this)
         bluetoothService.openBluetooth(this)
-        sharedPreferences = application.sharedPreferences
-        mainToast = Toast.makeText(this, "", Toast.LENGTH_LONG)
         setContent {
-            TestChatApp()
+            ItemTrackingSystemApp()
         }
     }
 
 
     @Composable
-    private fun TestChatApp() {
-        TestChatTheme {
+    private fun ItemTrackingSystemApp() {
+        ItemTrackingSystemTheme {
             MainScreen(
-                mainViewModel = viewModel, bluetoothService = bluetoothService, application,
-                previousBTAddress = sharedPreferences.getPreviousDeviceAddress(),
-                showToast = {
-                    showToast(it)
-                },
-            )
-//            var name by remember {
-//                mutableStateOf(sharedPreferences.getName())
-//            }
-//            if (name.isEmpty()) {
-//                EnterNameDialog(
-//                    showToast = ::showToast, name = name,
-//                    onSave = {
-//                        name = it
-//                        sharedPreferences.saveName(it)
-//                    },
-//                )
-//            } else {
-//
-//            }
+                bluetoothService = bluetoothService,
+                application = application,
+                mainViewModel
+            ) {
+                showToast(it)
+            }
         }
     }
 
@@ -88,16 +62,19 @@ class MainActivity : ComponentActivity() {
         super.onDestroy()
         bluetoothService.disconnect()
         bluetoothService.close()
-        unregisterReceiver(bluetoothService.mGattUpdateReceiver)
+        unregisterReceiver(mainViewModel.mGattUpdateReceiver)
     }
 
+    @SuppressLint("UnspecifiedRegisterReceiverFlag")
     private fun startMyService() {
-        registerReceiver(bluetoothService.mGattUpdateReceiver, IntentFilter().apply {
+        val intentFilter = IntentFilter().apply {
             addAction(BluetoothService.ACTION_GATT_CONNECTED)
             addAction(BluetoothService.ACTION_GATT_DISCONNECTED)
             addAction(BluetoothService.ACTION_GATT_SERVICES_DISCOVERED)
             addAction(BluetoothService.ACTION_DATA_AVAILABLE)
-        })
+        }
+
+        registerReceiver(mainViewModel.mGattUpdateReceiver, intentFilter)
 
 
 //        val intent = Intent(this, MyService::class.java)

@@ -1,13 +1,20 @@
 package com.tzh.itemTrackingSystem.data.model
 
-data class Item(
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+
+class Item(
     val id: Int = 0,
     val itemName: String,
     val desc: String? = null,
     val rfid: String? = null,
     val categoryId: Int? = null,
     val isForShop: Boolean = false,
-    var isScan: Boolean = false,
-    val categoryName: String = "",
-    var isCheck: Boolean = false,
-)
+    var initialIsScan: Boolean = false,
+    var categoryName: String = "",
+    var initialIsCheck: Boolean = false,
+) {
+    var isScan by mutableStateOf(initialIsScan)
+    var isCheck by mutableStateOf(initialIsCheck)
+}

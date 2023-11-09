@@ -1,7 +1,5 @@
 package com.tzh.itemTrackingSystem.screen.addItem
 
-import android.util.Log
-import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -33,6 +31,7 @@ import com.tzh.itemTrackingSystem.screen.common.TextFieldWithTitle
 import com.tzh.itemTrackingSystem.screen.common.TitleText
 import com.tzh.itemTrackingSystem.service.BluetoothService
 import com.tzh.itemTrackingSystem.ui.theme.RFIDTextColor
+import com.tzh.itemTrackingSystem.ulti.Extensions.showToast
 
 @Composable
 fun AddItemScreen(
@@ -50,35 +49,19 @@ fun AddItemScreen(
             bluetoothService.setOnDataAvailableListener(itemViewModel)
         },
         onPause = {
+            bluetoothService.stopScan()
             bluetoothService.removeOnDataAvailableListener()
         },
     )
 
     val uiState by itemViewModel.uiState.collectAsState()
-    Log.e("DATA", uiState.toString())
-
     LaunchedEffect(
         key1 = uiState.rfidText,
-        block = {
-            if (uiState.rfidText.isNotEmpty()) {
-                bluetoothService.stopScan()
-            }
-        },
-    )
-
-//    if (uiState.isShowCategoryDialog) {
-//        CrateCategoryDialog(save = {
-//
-//            itemViewModel.addCategory(it) {
-//                navController.navigateUp()
-//            }
-//
-//        }) {
-//            itemViewModel.dismissCategoryDialog()
-//        }
-//    }
-
-
+    ) {
+        if (uiState.rfidText.isNotEmpty()) {
+            bluetoothService.stopScan()
+        }
+    }
     Column(
         verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier
             .fillMaxSize()
@@ -113,7 +96,6 @@ fun AddItemScreen(
 
             }
         }
-
         Row(
             horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically
         ) {
@@ -127,12 +109,12 @@ fun AddItemScreen(
             ElevatedButton(
                 onClick = {
                     itemViewModel.addItem(showToast = {
-                        Toast.makeText(context, it, Toast.LENGTH_LONG).show()
+                        context.showToast(it)
                     }, success = {
                         if (uiState.editItemEntity != null) {
-                            Toast.makeText(context, "Successfully edited", Toast.LENGTH_LONG).show()
+                            context.showToast("Successfully edited")
                         } else {
-                            Toast.makeText(context, "Successfully Added", Toast.LENGTH_LONG).show()
+                            context.showToast("Successfully Added")
                         }
                         navController.navigateUp()
                     })

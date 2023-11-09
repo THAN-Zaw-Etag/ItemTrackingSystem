@@ -29,16 +29,28 @@ abstract class PlanDao {
     @Update()
     abstract suspend fun updatePlan(item: PlanEntity)
 
-    @Query("SELECT * FROM ${TableNameConstant.ITEM} WHERE id IN (SELECT ItemId FROM ${TableNameConstant.ITEM_PLAN_ENTITY} WHERE PlanId = :planId)")
+    @Query(
+        """ SELECT * FROM ${TableNameConstant.ITEM}
+               WHERE ItemId IN (
+                         SELECT ItemId FROM ${TableNameConstant.ITEM_PLAN} 
+                         WHERE PlanId = :planId)
+                """
+    )
     abstract fun getItemsByPlanId(planId: Int): Flow<List<ItemEntity>>
 
-    @Query("SELECT * FROM ${TableNameConstant.ITEM} WHERE id IN (SELECT ItemId FROM ${TableNameConstant.ITEM_PLAN_ENTITY} WHERE PlanId != :planId)")
+    @Query(
+        """SELECT * FROM ${TableNameConstant.ITEM} 
+                WHERE ItemId IN (
+                SELECT ItemId FROM ${TableNameConstant.ITEM_PLAN} 
+                WHERE PlanId != :planId
+            )"""
+    )
     abstract fun getItemsNotByPlanId(planId: Int): Flow<List<ItemEntity>>
 
     @Insert
     abstract suspend fun addPlanItem(itemPlanList: List<ItemPlanEntity>)
 
-    @Query("DELETE FROM tblItemPlan WHERE PlanId =:planId AND ItemId =:itemId")
+    @Query("DELETE FROM ${TableNameConstant.ITEM_PLAN} WHERE PlanId =:planId AND ItemId =:itemId")
     abstract suspend fun planItemRemove(planId: Int, itemId: Int)
 
 }

@@ -3,8 +3,10 @@ package com.tzh.itemTrackingSystem.ulti
 import android.Manifest
 import android.app.Activity
 import android.app.Application
+import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
+import android.widget.Toast
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.core.app.ActivityCompat
 import com.tzh.itemTrackingSystem.MainActivity
@@ -117,4 +119,9 @@ object Extensions {
         2 -> false
         else -> null
     }
+
+    fun Context.showToast(message: String) {
+        Toast.makeText(this, message, Toast.LENGTH_LONG).show()
+    }
+
 }

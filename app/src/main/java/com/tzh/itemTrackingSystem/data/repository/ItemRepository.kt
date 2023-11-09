@@ -8,7 +8,7 @@ import com.tzh.itemTrackingSystem.data.entity.ItemWithCategory
 class ItemRepository(private val itemDao: ItemDao) {
 
     fun getItemList() = itemDao.getAllItem()
-    fun getCategoryById(id: Int) = itemDao.getCategoryById(id)
+    suspend fun getCategoryById(id: Int) = itemDao.getCategoryById(id)
 
     fun getItemsCategory() = itemDao.getItemsCategory()
     fun getAllItemsCategory() = itemDao.getAllItemsCategory()

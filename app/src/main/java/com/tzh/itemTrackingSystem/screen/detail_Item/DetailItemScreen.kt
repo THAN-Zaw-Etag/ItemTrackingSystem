@@ -11,18 +11,19 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
@@ -30,8 +31,6 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tzh.itemTrackingSystem.R
 import com.tzh.itemTrackingSystem.data.repository.ItemRepository
@@ -50,52 +49,25 @@ fun DetailItemScreen(
     val uiState by viewModel.uiState.collectAsState()
     val item = uiState.item
     val lifecycleOwner = LocalLifecycleOwner.current
+    val mContext = LocalContext.current
+    val mMediaPlayer by remember { mutableStateOf(MediaPlayer.create(mContext, R.raw.beep)) }
     ControlBluetoothLifecycle(
         LocalLifecycleOwner.current,
         onCreate = {
             viewModel.setBluetoothService(bluetoothService)
         },
         onResume = {
+            viewModel.setMediaPlayer(mMediaPlayer)
             bluetoothService.setOnDataAvailableListener(viewModel)
             bluetoothService.setScanStateListener(viewModel)
         },
         onPause = {
+            bluetoothService.stopScan()
             bluetoothService.removeOnDataAvailableListener()
             bluetoothService.removeScanStateListener(viewModel)
+            mMediaPlayer.release()
         },
     )
-
-    // Fetching the local context
-    val mContext = LocalContext.current
-
-    // Declaring and Initializing
-    // the MediaPlayer to play "audio.mp3"
-    val mMediaPlayer by remember { mutableStateOf(MediaPlayer.create(mContext, R.raw.beep)) }
-
-
-    DisposableEffect(key1 = lifecycleOwner) {
-        val lifecycleEventObserver = LifecycleEventObserver { source, event ->
-            when (event) {
-                Lifecycle.Event.ON_CREATE -> {
-                    viewModel.setMediaPlayer(mMediaPlayer)
-                }
-
-                Lifecycle.Event.ON_RESUME -> {}
-
-                Lifecycle.Event.ON_PAUSE -> {}
-
-                Lifecycle.Event.ON_DESTROY -> {
-                    mMediaPlayer.release()
-                }
-
-                else -> {}
-            }
-        }
-        lifecycleOwner.lifecycle.addObserver(lifecycleEventObserver)
-        onDispose {
-            lifecycleOwner.lifecycle.removeObserver(lifecycleEventObserver)
-        }
-    }
 
     Column(
         verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier
@@ -129,7 +101,9 @@ fun DetailItemScreen(
                         modifier = Modifier.align(Alignment.Center)
                     ) {
                         for (i in 7 downTo 1) {
-                            ScanLevelDivider(isLevelHeight = i + 1 < uiState.scanLevel, modifier = Modifier.fillMaxWidth(i / 10f))
+                            ScanLevelDivider(
+                                isLevelHeight = i + 1 < uiState.scanLevel, modifier = Modifier.fillMaxWidth(i / 10f)
+                            )
                         }
                         Text(text = "Scan Level")
                     }
@@ -149,7 +123,9 @@ fun ScanLevelDivider(isLevelHeight: Boolean, modifier: Modifier) {
         },
         label = "",
     )
-    HorizontalDivider(thickness = 8.dp, modifier = modifier, color = scanColor)
+    HorizontalDivider(
+        thickness = 8.dp, modifier = modifier.clip(RoundedCornerShape(30.dp)), color = scanColor
+    )
 }
 
 @Composable
@@ -166,5 +142,4 @@ fun RowTextItem(title: String, label: String) {
             text = label, style = style.copy(color = Color.Black, fontWeight = FontWeight.Thin)
         )
     }
-
 }

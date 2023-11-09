@@ -10,7 +10,7 @@ fun ItemEntity.toItemMapper(): Item = Item(
     desc = this.desc,
     rfid = this.rfid,
     categoryId = this.categoryId,
-    isScan = false
+    initialIsScan = false
 )
 
 fun Item.toItemEntityMapper(): ItemEntity = ItemEntity(

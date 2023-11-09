@@ -95,14 +95,11 @@ class ItemViewModel(private val repository: ItemRepository) : ViewModel(), OnDat
             rfidList.forEach { rfid ->
                 if (!rfidScanList.contains(rfid)) {
                     rfidScanList.add(rfid)
-                    itemList.forEach { item ->
-                        if (item.rfid == rfid) {
-                            val iIndex = itemList.indexOf(item)
-                            val mItem = itemList[iIndex].copy()
-                            mItem.isScan = true
-                            itemList[iIndex] = mItem
-                            Log.e("RFID is found", "TRUE")
-                        }
+                    itemList.find { it.rfid == rfid }?.let {
+                        val mItem = it
+                        mItem.isScan = true
+//                        itemList[iIndex] = mItem
+                        Log.e("RFID is found", "TRUE")
                     }
                     _uiState.update { currentState ->
                         currentState.copy()
@@ -118,10 +115,10 @@ class ItemViewModel(private val repository: ItemRepository) : ViewModel(), OnDat
         if (isScan) {
             rfidScanList.clear()
             itemList.forEach { item ->
-                val iIndex = itemList.indexOf(item)
-                val mItem = itemList[iIndex].copy()
-                mItem.isScan = false
-                itemList[iIndex] = mItem
+//                val iIndex = itemList.indexOf(item)
+//                val mItem = itemList[iIndex].copy()
+                item.isScan = false
+//                itemList[iIndex] = mItem
             }
             _uiState.update { currentState ->
                 currentState.copy()

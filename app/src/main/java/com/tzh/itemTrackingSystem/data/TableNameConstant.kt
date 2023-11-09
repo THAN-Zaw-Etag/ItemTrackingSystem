@@ -5,5 +5,5 @@ object TableNameConstant {
     const val ITEM = "tblItem"
     const val CATEGORY = "tblCategory"
     const val PLAN = "tblPlan"
-    const val ITEM_PLAN_ENTITY = "tblItemPlan"
+    const val ITEM_PLAN = "tblItemPlan"
 }

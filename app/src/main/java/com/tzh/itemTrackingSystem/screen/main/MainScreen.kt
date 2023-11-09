@@ -1,7 +1,6 @@
 package com.tzh.itemTrackingSystem.screen.main
 
 
-import android.util.Log
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
@@ -26,8 +25,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
@@ -35,32 +32,26 @@ import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import androidx.navigation.navArgument
 import com.tzh.itemTrackingSystem.ItemTrackingSystemApplication
 import com.tzh.itemTrackingSystem.R
-import com.tzh.itemTrackingSystem.screen.addItem.AddItemScreen
 import com.tzh.itemTrackingSystem.screen.addItem.AddItemViewModel
-import com.tzh.itemTrackingSystem.screen.addPlan.CreatePlanScreen
 import com.tzh.itemTrackingSystem.screen.common.AppTitle
 import com.tzh.itemTrackingSystem.screen.common.ControlBluetoothLifecycle
 import com.tzh.itemTrackingSystem.screen.common.DeviceConnectionText
 import com.tzh.itemTrackingSystem.screen.common.MyDropDown
 import com.tzh.itemTrackingSystem.screen.common.RfidImage
-import com.tzh.itemTrackingSystem.screen.createCategory.CreateCategoryScreen
-import com.tzh.itemTrackingSystem.screen.detail_Item.DetailItemScreen
 import com.tzh.itemTrackingSystem.screen.dialog.BluetoothBottomSheet
 import com.tzh.itemTrackingSystem.screen.dialog.ConnectingDialog
 import com.tzh.itemTrackingSystem.screen.dialog.PowerBottomSheet
-import com.tzh.itemTrackingSystem.screen.dialog.StartConnecting
-import com.tzh.itemTrackingSystem.screen.item.ItemScreen
 import com.tzh.itemTrackingSystem.screen.navigation.ROUTE
-import com.tzh.itemTrackingSystem.screen.plan.PlanScreen
-import com.tzh.itemTrackingSystem.screen.plan.planDetail.PlanDetailScreen
 import com.tzh.itemTrackingSystem.service.BluetoothService
+import com.tzh.itemTrackingSystem.ui.navigation.addScreenNavGraph
+import com.tzh.itemTrackingSystem.ui.navigation.homeNavGraph
+import com.tzh.itemTrackingSystem.ui.navigation.itemDetailNavGraph
+import com.tzh.itemTrackingSystem.ui.navigation.planDetailNavGraph
+import com.tzh.itemTrackingSystem.ui.navigation.planNavGraph
 import com.tzh.itemTrackingSystem.ulti.ConnectionStatus
 import com.tzh.itemTrackingSystem.ulti.Constant
 import com.tzh.itemTrackingSystem.ulti.Constant.ADD_CATEGORY
@@ -72,54 +63,44 @@ import com.tzh.itemTrackingSystem.ulti.Extensions.getStatus
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen(
-    mainViewModel: MainViewModel,
     bluetoothService: BluetoothService,
     application: ItemTrackingSystemApplication,
-    showToast: (String) -> Unit,
-    previousBTAddress: String?,
+    mainViewModel: MainViewModel,
     itemViewModel: AddItemViewModel = viewModel(
         factory = AddItemViewModel.Companion.FACTORY(
             application.itemRepository, application.categoryRepository
         )
-    )
+    ),
+    showToast: (String) -> Unit,
 ) {
-
     val navController = rememberNavController()
     val deviceList by mainViewModel.btDeviceList.collectAsState()
-    val isScanning by mainViewModel.isScanning.collectAsState()
-    val connectionState by mainViewModel.connectionStatus.collectAsState()
-    val deviceName by mainViewModel.connectedDeviceName.collectAsState()
-
-    var selectedBtDevice: String? by remember { mutableStateOf(previousBTAddress) }
-    ConnectingDialog(isShow = selectedBtDevice != null, selectedBtDevice)
-    StartConnecting(selectedBtDevice, bluetoothService, mainViewModel, showToast) {
-        selectedBtDevice = null
-    }
+    val uiState by mainViewModel.uiState.collectAsState()
+    ConnectingDialog(isShow = uiState.selectedBtDevice != null, uiState.selectedBtDevice)
+//    StartConnecting(
+//        uiState.selectedBtDevice,
+//        bluetoothService,
+//        mainViewModel,
+//        uiState.connectionStatus,
+//        showToast,
+//    ) {
+//        mainViewModel.setSelectedDevice(null)
+//    }
     val modalBottomSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    var bluetoothShowSheet by rememberSaveable { mutableStateOf(false) }
-    var powerShowSheet by rememberSaveable {
-        mutableStateOf(false)
-    }
     BluetoothBottomSheet(
-        isShow = bluetoothShowSheet,
+        isShow = uiState.showBtSheet,
         sheetState = modalBottomSheetState,
         bluetoothService = bluetoothService,
         deviceList = deviceList,
-        dismiss = {
-            bluetoothShowSheet = false
-        },
-        onConnect = {
-            bluetoothShowSheet = false
-            selectedBtDevice = it
-        },
+        dismiss = mainViewModel::dismissBtSheet,
+        onConnect = mainViewModel::setSelectedDevice,
     )
     PowerBottomSheet(
-        isShow = powerShowSheet, sheetState = modalBottomSheetState,
-        dismiss = {
-            powerShowSheet = false
-        },
+        isShow = uiState.showPowerSheet,
+        sheetState = modalBottomSheetState,
+        dismiss = mainViewModel::dismissPowerSheet,
         onSave = {
-            if (!isScanning) {
+            if (!uiState.isScanning) {
                 val isSuccess = bluetoothService.setPower(it)
                 showToast(
                     if (isSuccess) {
@@ -128,7 +109,7 @@ fun MainScreen(
                         "Fail to set power"
                     }
                 )
-                powerShowSheet = false
+                mainViewModel.dismissPowerSheet()
             } else {
                 showToast("Reader is running.")
             }
@@ -150,17 +131,6 @@ fun MainScreen(
             bluetoothService.removeOnDiscoverListener()
         },
     )
-
-    var currentRoute by remember {
-        mutableStateOf("")
-    }
-
-//    LaunchedEffect(key1 = currentRoute) {
-//        if (currentRoute.isNotEmpty()) {
-//            currentRoute = ""
-//        }
-//    }
-
     val expended = remember {
         mutableStateOf(false)
     }
@@ -190,7 +160,7 @@ fun MainScreen(
                 actions = {
                     IconButton(
                         onClick = {
-                            if (currentRoute == ROUTE.Home) {
+                            if (uiState.currentRoute == ROUTE.Home) {
                                 expended.value = true
                             }
                         },
@@ -198,15 +168,18 @@ fun MainScreen(
                         Image(painter = painterResource(id = R.drawable.add), contentDescription = "Setting")
                     }
                     IconButton(
-                        onClick = { bluetoothShowSheet = true },
+                        onClick = { mainViewModel.showBtSheet() },
                     ) {
                         Image(painter = painterResource(id = R.drawable.bluetooth), contentDescription = "Bluetooth")
                     }
-                    IconButton(onClick = { powerShowSheet = true }, enabled = connectionState == ConnectionStatus.CONNECTED) {
+                    IconButton(
+                        onClick = { mainViewModel.showPowerSheet() },
+                        enabled = uiState.connectionStatus == ConnectionStatus.CONNECTED
+                    ) {
                         Image(painter = painterResource(id = R.drawable.setting), contentDescription = "Setting")
                     }
                     IconButton(onClick = {
-                        if (currentRoute == ROUTE.Home) {
+                        if (uiState.currentRoute == ROUTE.Home) {
                             navController.navigate(ROUTE.PlanScreen)
                         }
 
@@ -220,7 +193,7 @@ fun MainScreen(
                     }
 
                     IconButton(onClick = {
-                        if (currentRoute != ROUTE.Home) {
+                        if (uiState.currentRoute != ROUTE.Home) {
                             navController.navigate(ROUTE.Home) {
                                 popUpTo(ROUTE.Home) {
                                     inclusive = true
@@ -234,7 +207,6 @@ fun MainScreen(
                             contentDescription = "Home"
                         )
                     }
-
                 },
                 floatingActionButton = {
                     FloatingActionButton(
@@ -260,12 +232,14 @@ fun MainScreen(
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 AppTitle()
-                DeviceConnectionText(getStatus(connectionState, deviceName), modifier = Modifier.fillMaxWidth())
-                if (connectionState == ConnectionStatus.CONNECTED) {
+                DeviceConnectionText(
+                    getStatus(uiState.connectionStatus, uiState.connectedDeviceName), modifier = Modifier.fillMaxWidth()
+                )
+                AnimatedVisibility(visible = uiState.connectionStatus == ConnectionStatus.CONNECTED) {
                     Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                        DeviceConnectionText(getScanStatus(isScanning))
+                        DeviceConnectionText(getScanStatus(uiState.isScanning))
                         Spacer(modifier = Modifier.width(16.dp))
-                        AnimatedVisibility(visible = isScanning) {
+                        AnimatedVisibility(visible = uiState.isScanning) {
                             CircularProgressIndicator()
                         }
                     }
@@ -273,93 +247,40 @@ fun MainScreen(
                 NavHost(
                     modifier = Modifier.weight(1f), navController = navController, startDestination = ROUTE.Home
                 ) {
-                    composable(ROUTE.Home) {
-                        Log.e("ROUTE is ", ROUTE.Home)
-                        currentRoute = ROUTE.Home
-                        ItemScreen(
-                            bluetoothService = bluetoothService,
-                            modifier = Modifier.fillMaxSize(),
-                            itemRepository = application.itemRepository,
-                            editItem = { item ->
-                                if (currentRoute == ROUTE.Home) {
-                                    itemViewModel.setEditItem(item)
-                                    navController.navigate(ROUTE.AddItem)
-                                }
-                            },
-                            onClick = { item ->
-                                if (currentRoute == ROUTE.Home) {
-                                    navController.navigate(ROUTE.DetailScreen + "/${item.id}")
-                                }
-                            },
-                        )
-                    }
+                    homeNavGraph(
+                        uiState.currentRoute,
+                        navController = navController,
+                        itemRepository = application.itemRepository,
+                        addItemViewModel = itemViewModel,
+                        bluetoothService = bluetoothService,
+                        setCurrentRoute = mainViewModel::setCurrentRoute
+                    )
 
-                    composable(ROUTE.AddItem) {
-                        currentRoute = ROUTE.AddItem
-                        Log.e("ROUTE is ", ROUTE.AddItem)
-                        AddItemScreen(bluetoothService, itemViewModel, navController = navController)
-                    }
+                    addScreenNavGraph(
+                        bluetoothService,
+                        itemViewModel,
+                        navController,
+                        application,
+                        mainViewModel::setCurrentRoute,
+                    )
 
-                    composable(ROUTE.AddCategory) {
-                        currentRoute = ROUTE.AddCategory
-                        Log.e("ROUTE is ", ROUTE.AddCategory)
-                        CreateCategoryScreen { category ->
-                            itemViewModel.addCategory(category) {
-                                navController.navigateUp()
-                            }
-                        }
-                    }
+                    itemDetailNavGraph(
+                        bluetoothService,
+                        application.itemRepository,
+                        mainViewModel::setCurrentRoute,
+                    )
 
-                    composable(ROUTE.AddPlan) {
-                        currentRoute = ROUTE.AddPlan
-                        Log.e("ROUTE is ", ROUTE.AddPlan)
-                        CreatePlanScreen(navController = navController, planRepository = application.planRepository)
-                    }
 
-                    composable(
-                        ROUTE.DetailScreen + "/{id}", arguments = listOf(
-                            navArgument("id") {
-                                type = NavType.IntType
-                                defaultValue = 0
-                            },
-                        )
-                    ) { backStackEntry ->
-                        currentRoute = ROUTE.DetailScreen
-                        Log.e("ROUTE is ", ROUTE.DetailScreen)
-                        val itemId = backStackEntry.arguments?.getInt("id") ?: 0
-                        DetailItemScreen(itemId = itemId, itemRepository = application.itemRepository, bluetoothService)
-                    }
 
-                    composable(ROUTE.PlanScreen) {
-                        currentRoute = ROUTE.PlanScreen
-                        Log.e("ROUTE is ", ROUTE.PlanScreen)
-                        PlanScreen(navController, planRepository = application.planRepository)
-                    }
+                    planNavGraph(
+                        navController = navController,
+                        application.planRepository,
+                        mainViewModel::setCurrentRoute,
+                    )
 
-                    composable(
-                        ROUTE.PlanDetailScreen + "/{planId}/{planName}", arguments = listOf(
-                            navArgument("planId") {
-                                type = NavType.IntType
-                                defaultValue = 0
-                            },
-                            navArgument("planName") {
-                                type = NavType.StringType
-                                defaultValue = ""
-                            },
-                        )
-                    ) { backStackEntry ->
-                        currentRoute = ROUTE.PlanDetailScreen
-                        Log.e("ROUTE is ", ROUTE.PlanDetailScreen)
-                        val planId = backStackEntry.arguments?.getInt("planId") ?: 0
-                        val planName = backStackEntry.arguments?.getString("planName") ?: ""
-                        PlanDetailScreen(
-                            bluetoothService,
-                            planId,
-                            planName,
-                            planRepository = application.planRepository,
-                            itemRepository = application.itemRepository
-                        )
-                    }
+                    planDetailNavGraph(
+                        bluetoothService, application, mainViewModel::setCurrentRoute
+                    )
                 }
             }
         }

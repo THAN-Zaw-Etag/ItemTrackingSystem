@@ -6,7 +6,7 @@ import androidx.room.PrimaryKey
 import com.tzh.itemTrackingSystem.data.TableNameConstant
 
 
-@Entity(tableName = TableNameConstant.ITEM_PLAN_ENTITY)
+@Entity(tableName = TableNameConstant.ITEM_PLAN)
 data class ItemPlanEntity(
     @PrimaryKey(autoGenerate = true) val id: Int = 0,
     @ColumnInfo("PlanId") val planId: Int,

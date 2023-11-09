@@ -1,6 +1,5 @@
 package com.tzh.itemTrackingSystem.screen.addItem
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -20,7 +19,10 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.util.Locale
 
-class AddItemViewModel(private val itemRepository: ItemRepository, private val categoryRepository: CategoryRepository) :
+class AddItemViewModel(
+    private val itemRepository: ItemRepository,
+    private val categoryRepository: CategoryRepository
+) :
     ViewModel(), OnDataAvailableListener {
 
     private val categoryList = categoryRepository.getCategoryList()
@@ -164,12 +166,6 @@ class AddItemViewModel(private val itemRepository: ItemRepository, private val c
         }
     }
 
-    fun getData(id: Int) {
-        viewModelScope.launch {
-            val itemEntity = itemRepository.findItemCategoryById(id)
-            Log.e("Data", itemEntity.toString())
-        }
-    }
 
     companion object {
         class FACTORY(val repository: ItemRepository, val categoryRepository: CategoryRepository) : ViewModelProvider.Factory {

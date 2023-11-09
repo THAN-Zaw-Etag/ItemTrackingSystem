@@ -2,7 +2,6 @@ package com.tzh.itemTrackingSystem.screen.dialog
 
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothDevice
-import android.widget.Toast
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Arrangement
@@ -43,6 +42,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.tzh.itemTrackingSystem.screen.common.TitleText
 import com.tzh.itemTrackingSystem.service.BluetoothService
+import com.tzh.itemTrackingSystem.ulti.Extensions.showToast
 
 @SuppressLint("MissingPermission")
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
@@ -163,7 +163,7 @@ fun BluetoothBottomSheet(
                 }
                 ElevatedButton(onClick = {
                     if (selectedBtDevice == null) {
-                        Toast.makeText(context, "Please selected the bt address", Toast.LENGTH_LONG).show()
+                        context.showToast("Please selected the bt address")
                         return@ElevatedButton
                     }
                     if (isScanning) {

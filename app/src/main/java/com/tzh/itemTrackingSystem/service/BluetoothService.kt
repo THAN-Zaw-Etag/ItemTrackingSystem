@@ -12,12 +12,11 @@ import android.bluetooth.BluetoothGattService
 import android.bluetooth.BluetoothProfile
 import android.content.Intent
 import android.util.Log
-import android.widget.Toast
 import com.tzh.itemTrackingSystem.ItemTrackingSystemApplication
 import com.tzh.itemTrackingSystem.chf301.BTClient
-import com.tzh.itemTrackingSystem.chf301.GattUpdateReceiver
 import com.tzh.itemTrackingSystem.ulti.ConnectionStatus
 import com.tzh.itemTrackingSystem.ulti.Extensions.checkBluetoothScan
+import com.tzh.itemTrackingSystem.ulti.Extensions.showToast
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.util.Locale
@@ -51,18 +50,24 @@ class BluetoothService(private val application: ItemTrackingSystemApplication) {
     private val bluetoothAdapter = BluetoothAdapter.getDefaultAdapter()
     private val bluetoothDeviceList = mutableListOf<BluetoothDevice>()
 
-    var mGattUpdateReceiver: GattUpdateReceiver = GattUpdateReceiver(
-        updateConnectionState = {
-            updateDeviceStatus(mBluetoothDeviceAddress, it)
-        },
-        serviceDiscover = {
-            if (supportedGattServices != null) {
-                displayGattServices(supportedGattServices)
-                setPower(DefaultPower.toInt())
-            }
-        },
-        displayData = ::displayData,
-    )
+//    @OptIn(DelicateCoroutinesApi::class)
+//    var mGattUpdateReceiver: GattUpdateReceiver = GattUpdateReceiver(
+//        updateConnectionState = {
+//            updateDeviceStatus(mBluetoothDeviceAddress, it)
+//        },
+//        serviceDiscover = {
+//            if (supportedGattServices != null) {
+//                GlobalScope.launch {
+//                    withContext(Dispatchers.IO){
+//                        displayGattServices(supportedGattServices)
+//                        setPower(DefaultPower.toInt())
+//                        setDefaultRegion()
+//                    }
+//                }
+//            }
+//        },
+//        displayData = ::displayData,
+//    )
 
 
     var mScanStateListener: MutableList<ScanStateListener> = mutableListOf()
@@ -101,9 +106,24 @@ class BluetoothService(private val application: ItemTrackingSystemApplication) {
     fun setPower(power: Int): Boolean {
         return try {
             BTClient.SetPower(power.toByte())
+            Log.e("SET POWER IS :", "SET power $power")
             true
         } catch (e: Exception) {
             false
+        }
+    }
+
+    fun setDefaultRegion() {
+        try {
+            val min = (8 and 3 shl 6) or (49 and 0x3F)
+//            val min = (840.125 + 19 * 0.25).toInt().toByte()
+//            val max = (840.125 + 19 * 0.25).toInt().toByte()
+
+            val max = (8 and 0x0c shl 4) or (49 and 0x3F)
+            BTClient.SetRegion(max.toByte(), min.toByte())
+            Log.e("SET DEFAULT REGION IS :", "MIN $min , MAX $max")
+        } catch (e: Exception) {
+
         }
     }
 
@@ -130,9 +150,7 @@ class BluetoothService(private val application: ItemTrackingSystemApplication) {
             close()
         }
         if (connectionStatus == ConnectionStatus.CONNECTED) {
-            application.sharedPreferences.apply {
-                saveDeviceAddress(mBluetoothDeviceAddress)
-            }
+            application.sharedPreferences.saveDeviceAddress(mBluetoothDeviceAddress)
         }
     }
 
@@ -203,12 +221,11 @@ class BluetoothService(private val application: ItemTrackingSystemApplication) {
 //                        val data = scanResult
 //                        val scanlist = ArrayList<String>(data.keys)
 //                        getData(scanlist)
-
                     } else {
                         stopScan()
                     }
                 }
-            }, 0, 10L)
+            }, 0, 20L)
         }
     }
 
@@ -292,12 +309,12 @@ class BluetoothService(private val application: ItemTrackingSystemApplication) {
 
     fun openBluetooth(activity: Activity) {
         if (bluetoothAdapter == null) {
-            Toast.makeText(application, "Bluetooth not support", Toast.LENGTH_LONG).show()
+            application.showToast("Bluetooth not support")
         } else {
             if (!bluetoothAdapter.isEnabled) {
                 enabledBT(activity)
             } else {
-                Toast.makeText(application, "Bluetooth open", Toast.LENGTH_LONG).show()
+                application.showToast("Bluetooth open")
             }
         }
     }
@@ -307,12 +324,12 @@ class BluetoothService(private val application: ItemTrackingSystemApplication) {
         activity.startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT)
     }
 
-    private fun displayData(rev_string: String?) {
+    fun displayData(rev_string: String?) {
         RecvString += rev_string
         //   Log.e("RECVI STRING", RecvString.toString())
     }
 
-    private fun displayGattServices(gattServices: List<BluetoothGattService>?) {
+    fun displayGattServices(gattServices: List<BluetoothGattService>?) {
         Log.i(TAG, "displayGattServices - target_chara test")
         if (gattServices == null) {
             Log.e(TAG, "null")
@@ -444,6 +461,17 @@ class BluetoothService(private val application: ItemTrackingSystemApplication) {
     }
 
     private val mGattCallback: BluetoothGattCallback = object : BluetoothGattCallback() {
+        override fun onCharacteristicRead(
+            gatt: BluetoothGatt, characteristic: BluetoothGattCharacteristic, value: ByteArray, status: Int
+        ) {
+            if (status == BluetoothGatt.GATT_SUCCESS) {
+                Log.i(TAG, "--onCharacteristicRead called--")
+                broadcastUpdate(ACTION_DATA_AVAILABLE, characteristic)
+            } else {
+                Log.i(TAG, "--onCharacteristicRead FAIL--")
+            }
+        }
+
         override fun onConnectionStateChange(gatt: BluetoothGatt, status: Int, newState: Int) {
             val intentAction: String
             if (newState == BluetoothProfile.STATE_CONNECTED) {
@@ -476,13 +504,15 @@ class BluetoothService(private val application: ItemTrackingSystemApplication) {
             if (status == BluetoothGatt.GATT_SUCCESS) {
                 Log.i(TAG, "--onCharacteristicRead called--")
                 broadcastUpdate(ACTION_DATA_AVAILABLE, characteristic)
+            } else {
+                Log.i(TAG, "--onCharacteristicRead FAIL--")
             }
         }
 
         override fun onCharacteristicChanged(
             gatt: BluetoothGatt, characteristic: BluetoothGattCharacteristic
         ) {
-            //   println("++++++++++++++++")
+            // println("++++++++++++++++")
             broadcastUpdate(ACTION_DATA_AVAILABLE, characteristic)
         }
 
@@ -490,6 +520,7 @@ class BluetoothService(private val application: ItemTrackingSystemApplication) {
             gatt: BluetoothGatt, characteristic: BluetoothGattCharacteristic, status: Int
         ) {
             Log.w(TAG, "--onCharacteristicWrite--: $status")
+
         }
 
         override fun onDescriptorRead(

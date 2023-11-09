@@ -1,6 +1,5 @@
 package com.tzh.itemTrackingSystem.screen.addPlan
 
-import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
@@ -22,6 +21,7 @@ import com.tzh.itemTrackingSystem.data.entity.PlanEntity
 import com.tzh.itemTrackingSystem.data.repository.PlanRepository
 import com.tzh.itemTrackingSystem.screen.common.TextFieldWithTitle
 import com.tzh.itemTrackingSystem.screen.common.TitleText
+import com.tzh.itemTrackingSystem.ulti.Extensions.showToast
 import java.util.Locale
 
 @Composable
@@ -64,7 +64,7 @@ fun CreatePlanScreen(
         }, title = "Description", value = planDesc)
         ElevatedButton(onClick = {
             if (planName.isEmpty()) {
-                Toast.makeText(context, "Please enter Plan Name", Toast.LENGTH_LONG).show()
+                context.showToast("Please enter Plan Name")
                 return@ElevatedButton
             }
             planEntity = PlanEntity(

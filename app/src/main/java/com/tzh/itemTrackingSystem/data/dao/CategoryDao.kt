@@ -21,7 +21,7 @@ abstract class CategoryDao {
     @Query("SELECT * FROM ${TableNameConstant.CATEGORY} where CategoryName = :name  Limit 1")
     abstract suspend fun getCategory(name: String): Category?
 
-    @Query("SELECT * FROM ${TableNameConstant.CATEGORY} where id = :id  Limit 1")
+    @Query("SELECT * FROM ${TableNameConstant.CATEGORY} where CategoryId = :id  Limit 1")
     abstract suspend fun getCategory(id: Int): Category
 
     @Update()

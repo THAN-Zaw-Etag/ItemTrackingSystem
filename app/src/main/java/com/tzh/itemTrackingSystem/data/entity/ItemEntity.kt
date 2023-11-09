@@ -7,7 +7,7 @@ import com.tzh.itemTrackingSystem.data.TableNameConstant
 
 @Entity(tableName = TableNameConstant.ITEM)
 data class ItemEntity(
-    @PrimaryKey(autoGenerate = true) val id: Int = 0,
+    @PrimaryKey(autoGenerate = true) @ColumnInfo("ItemId") val id: Int = 0,
     @ColumnInfo(name = "ItemName") val itemName: String,
     @ColumnInfo(name = "Description") val desc: String? = null,
     @ColumnInfo(name = "Rfid") val rfid: String? = null,

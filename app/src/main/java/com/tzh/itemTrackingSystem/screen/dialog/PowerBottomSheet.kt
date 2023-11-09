@@ -28,7 +28,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -41,11 +40,11 @@ import com.tzh.itemTrackingSystem.screen.common.TitleText
 fun PowerBottomSheet(
     isShow: Boolean, sheetState: SheetState, dismiss: () -> Unit, onSave: (power: Int) -> Unit
 ) {
-    val context = LocalContext.current
+
     val density = LocalDensity.current
     val bottomPadding = WindowInsets.navigationBars.getBottom(density).dp
     var power by remember {
-        mutableIntStateOf(5)
+        mutableIntStateOf(0)
     }
     if (isShow) {
         ModalBottomSheet(
@@ -69,26 +68,22 @@ fun PowerBottomSheet(
                     Icon(imageVector = Icons.Default.Close, contentDescription = "")
                 }
             }
-            AndroidView<NumberPicker>(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f),
-                factory = { context ->
-                    NumberPicker(context).apply {
-                        setOnValueChangedListener { numberPicker, i, newValue ->
-                            power = newValue
-                        }
-                        value = power
-                        minValue = 5
-                        maxValue = 30
-                    }
-                },
-                update = { view ->
-                    view.setOnValueChangedListener { numberPicker, i, newValue ->
+            AndroidView<NumberPicker>(modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f), factory = { context ->
+                NumberPicker(context).apply {
+                    setOnValueChangedListener { numberPicker, i, newValue ->
                         power = newValue
                     }
+                    value = power
+                    minValue = 0
+                    maxValue = 26
                 }
-            )
+            }, update = { view ->
+                view.setOnValueChangedListener { numberPicker, i, newValue ->
+                    power = newValue
+                }
+            })
             Spacer(modifier = Modifier.height(8.dp))
             Row(
                 modifier = Modifier

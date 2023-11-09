@@ -1,8 +1,6 @@
 package com.tzh.itemTrackingSystem.screen.plan.planDetail
 
 import android.media.MediaPlayer
-import android.util.Log
-import android.widget.Toast
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.tween
@@ -31,7 +29,6 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -40,7 +37,6 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -63,8 +59,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tzh.itemTrackingSystem.R
 import com.tzh.itemTrackingSystem.data.entity.ItemEntity
@@ -74,8 +68,10 @@ import com.tzh.itemTrackingSystem.data.repository.ItemRepository
 import com.tzh.itemTrackingSystem.data.repository.PlanRepository
 import com.tzh.itemTrackingSystem.screen.common.ControlBluetoothLifecycle
 import com.tzh.itemTrackingSystem.screen.common.TitleText
+import com.tzh.itemTrackingSystem.screen.dialog.LoadingDialog
 import com.tzh.itemTrackingSystem.service.BluetoothService
 import com.tzh.itemTrackingSystem.ui.theme.RFIDTextColor
+import com.tzh.itemTrackingSystem.ulti.Extensions.showToast
 
 @Composable
 fun PlanDetailScreen(
@@ -91,21 +87,21 @@ fun PlanDetailScreen(
     )
 ) {
     val itemList = viewModel.planItems
-    Log.e("PLAN Item List", itemList.toList().toString())
     val uiState by viewModel.uiState.collectAsState()
-    // Fetching the local context
-
     val mContext = LocalContext.current
+    val mMediaPlayer by remember { mutableStateOf(MediaPlayer.create(mContext, R.raw.beep)) }
+    val lifecycleOwner = LocalLifecycleOwner.current
     LaunchedEffect(key1 = uiState.errorMessage) {
         if (uiState.errorMessage.isNotEmpty()) {
-            Toast.makeText(mContext, uiState.errorMessage, Toast.LENGTH_LONG).show()
+            mContext.showToast(uiState.errorMessage)
             viewModel.dismissErrorMessage()
         }
     }
-
     ControlBluetoothLifecycle(
-        LocalLifecycleOwner.current,
-        onCreate = {},
+        lifecycleOwner,
+        onCreate = {
+            viewModel.setMediaPlayer(mMediaPlayer)
+        },
         onResume = {
             bluetoothService.setScanStateListener(viewModel)
             bluetoothService.setOnDataAvailableListener(viewModel)
@@ -114,61 +110,22 @@ fun PlanDetailScreen(
             bluetoothService.stopScan()
             bluetoothService.removeOnDataAvailableListener()
             bluetoothService.removeScanStateListener(viewModel)
+            mMediaPlayer.release()
         },
     )
-
-    // Declaring and Initializing
-    // the MediaPlayer to play "audio.mp3"
-    val mMediaPlayer by remember { mutableStateOf(MediaPlayer.create(mContext, R.raw.beep)) }
-    val lifecycleOwner = LocalLifecycleOwner.current
-    DisposableEffect(key1 = lifecycleOwner) {
-        val lifecycleEventObserver = LifecycleEventObserver { source, event ->
-            when (event) {
-                Lifecycle.Event.ON_CREATE -> {
-                    viewModel.setMediaPlayer(mMediaPlayer)
-                }
-
-                Lifecycle.Event.ON_DESTROY -> {
-                    mMediaPlayer.release()
-                }
-
-                else -> {}
-            }
-        }
-        lifecycleOwner.lifecycle.addObserver(lifecycleEventObserver)
-        onDispose {
-            lifecycleOwner.lifecycle.removeObserver(lifecycleEventObserver)
-        }
-    }
-
-    if (uiState.isLoading) {
-        Dialog(onDismissRequest = { }, DialogProperties(usePlatformDefaultWidth = false)) {
-            Card(
-                modifier = Modifier
-                    .padding(8.dp)
-                    .fillMaxWidth()
-                    .fillMaxHeight(0.4f)
-            ) {
-                Column(
-                    modifier = Modifier.fillMaxSize(),
-                    verticalArrangement = Arrangement.Center,
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    CircularProgressIndicator()
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(text = uiState.loadingMessage)
-                }
-            }
-        }
-    }
+    LoadingDialog(uiState.isLoading, uiState.loadingMessage)
 
     if (uiState.isShowAddItemScreen) {
-        AddItemScreen(viewModel.itemList, viewModel.planItems, dismiss = {
-            viewModel.showAddItemScreen(false)
-        }, addItem = {
-            viewModel.showAddItemScreen(false)
-            viewModel.addItemToPlan(it)
-        })
+        AddItemScreen(
+            uiState.itemList, uiState.planItemList,
+            dismiss = {
+                viewModel.showAddItemScreen(false)
+            },
+            addItem = {
+                viewModel.showAddItemScreen(false)
+                viewModel.addItemToPlan(it)
+            },
+        )
     }
 
     Column(Modifier.fillMaxSize()) {
@@ -191,7 +148,6 @@ fun PlanDetailScreen(
             modifier = Modifier.weight(1f)
         ) {
             items(itemList, key = { item -> item.id }) { item: Item ->
-                Log.e("ITEM In Plan", item.toString())
                 CardItem(
                     itemEntity = item,
                     remove = {
@@ -202,6 +158,7 @@ fun PlanDetailScreen(
         }
     }
 }
+
 
 @Composable
 private fun AddItemScreen(
@@ -220,17 +177,9 @@ private fun AddItemScreen(
                 }
             }
         }
-//        var selectedItems = remember {
-//            mutableStateListOf<Item>()
-//        }
-
         var selectedAll by remember {
             mutableStateOf(false)
         }
-//        LaunchedEffect(key1 = selectedItems) {
-//            selectedAll = itemList.size == selectedItems.size
-//        }
-
         Column(
             modifier = Modifier
                 .padding(8.dp)
@@ -258,13 +207,16 @@ private fun AddItemScreen(
                         selectedAll = !selectedAll
                         if (selectedAll) {
                             itemList.forEach { item ->
-                                val index = itemList.indexOf(item)
-                                itemList[index] = itemList[index].copy(isCheck = true)
+                                item.isCheck = true
+//
+//                                val index = itemList.indexOf(item)
+//                                itemList[index] = itemList[index].copy(isCheck = true)
                             }
                         } else {
                             itemList.forEach { item ->
-                                val index = itemList.indexOf(item)
-                                itemList[index] = itemList[index].copy(isCheck = false)
+                                item.isCheck = false
+//                                val index = itemList.indexOf(item)
+//                                itemList[index] = itemList[index].copy(isCheck = false)
                             }
                         }
                     }, modifier = Modifier
@@ -296,8 +248,9 @@ private fun AddItemScreen(
                     ) {
                         Checkbox(
                             checked = item.isCheck, onCheckedChange = {
-                                val index = itemList.indexOf(item)
-                                itemList[index] = itemList[index].copy(isCheck = !item.isCheck)
+//                                val index = itemList.indexOf(item)
+//                                itemList[index] = itemList[index].copy(isCheck = !item.isCheck)
+                                item.isCheck = !item.isCheck
                                 selectedAll = itemList.size == itemList.filter { it.isCheck }.size
                             }, modifier = Modifier
                                 .width(36.dp)
@@ -324,14 +277,12 @@ private fun AddItemScreen(
             }
             ElevatedButton(onClick = {
                 addItem(itemList.filter { it.isCheck }.map { it.toItemEntityMapper() }.toList())
-
             }, modifier = Modifier.align(Alignment.End)) {
                 Text(text = "Add Item")
             }
         }
     }
 }
-
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -361,7 +312,6 @@ private fun LazyItemScope.CardItem(itemEntity: Item, remove: () -> Unit) {
                 ElevatedButton(onClick = { remove() }) {
                     Text(text = "Confirm")
                 }
-
             },
             text = {
                 Text(
@@ -440,6 +390,5 @@ private fun LazyItemScope.CardItem(itemEntity: Item, remove: () -> Unit) {
                 )
             }
         }
-
     }
 }

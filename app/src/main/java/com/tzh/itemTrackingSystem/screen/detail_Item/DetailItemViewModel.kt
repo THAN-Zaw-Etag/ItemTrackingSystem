@@ -33,9 +33,10 @@ class DetailItemViewModel(private val itemId: Int, private val itemRepository: I
             itemEntity?.let { item ->
                 _uiState.update {
                     it.copy(
-                        item = item.itemEntity.toItemMapper().copy(
+                        item = item.itemEntity.toItemMapper().apply {
                             categoryName = item.categoryName ?: ""
-                        )
+
+                        }
                     )
                 }
             }
