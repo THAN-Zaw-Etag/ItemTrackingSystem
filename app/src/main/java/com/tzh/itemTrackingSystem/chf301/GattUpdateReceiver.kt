@@ -16,11 +16,9 @@ class GattUpdateReceiver(
         val action = intent.action
 
         if (BluetoothService.ACTION_GATT_CONNECTED == action) {
-//            MyService.mConnected = true
             updateConnectionState(ConnectionStatus.CONNECTED)
             println("BroadcastReceiver :" + "device connected")
         } else if (BluetoothService.ACTION_GATT_DISCONNECTED == action) {
-//            MyService.mConnected = false
             updateConnectionState(ConnectionStatus.DISCONNECTED)
             println("BroadcastReceiver :" + "device disconnected")
         } else if (BluetoothService.ACTION_GATT_SERVICES_DISCOVERED == action) {

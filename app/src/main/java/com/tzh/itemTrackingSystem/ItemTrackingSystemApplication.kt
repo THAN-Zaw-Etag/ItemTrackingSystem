@@ -16,9 +16,8 @@ class ItemTrackingSystemApplication : Application() {
     lateinit var itemRepository: ItemRepository
     lateinit var categoryRepository: CategoryRepository
     lateinit var planRepository: PlanRepository
-
-    //    private val myS: MyService = MyService()
     lateinit var bluetoothService: BluetoothService
+
     override fun onCreate() {
         super.onCreate()
         bluetoothService = BluetoothService(this)

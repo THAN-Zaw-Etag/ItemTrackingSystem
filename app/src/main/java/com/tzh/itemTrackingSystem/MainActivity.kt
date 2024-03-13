@@ -73,12 +73,8 @@ class MainActivity : ComponentActivity() {
             addAction(BluetoothService.ACTION_GATT_SERVICES_DISCOVERED)
             addAction(BluetoothService.ACTION_DATA_AVAILABLE)
         }
-
         registerReceiver(mainViewModel.mGattUpdateReceiver, intentFilter)
 
-
-//        val intent = Intent(this, MyService::class.java)
-//        this.startService(intent)
     }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {

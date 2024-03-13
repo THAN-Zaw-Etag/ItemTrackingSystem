@@ -5,8 +5,6 @@ import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
 
 class SharePreferenceHelper(context: Context) {
-//    val sharedPref = context.getSharedPreferences(context.packageName + LOCAL_KEY, Context.MODE_PRIVATE)
-//    private var prefsEditor: SharedPreferences.Editor = sharedPref.edit()
 
     companion object {
         const val NAME_KEY = "NAME_KEY"
@@ -19,16 +17,6 @@ class SharePreferenceHelper(context: Context) {
         ""
     )
 
-
-    //    fun getName(): String {
-//        return sharedPref.getString(NAME_KEY, "") ?: ""
-//    }
-//
-//    fun saveName(name: String) {
-//        prefsEditor.putString(NAME_KEY, name)
-//        prefsEditor.apply()
-//    }
-//
     fun getPreviousDeviceAddress(): String? {
         return mBluetoothAddress
     }

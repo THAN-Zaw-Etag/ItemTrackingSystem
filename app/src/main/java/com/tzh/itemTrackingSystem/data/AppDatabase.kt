@@ -35,27 +35,13 @@ abstract class AppDatabase : RoomDatabase() {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
                     applicationContext, AppDatabase::class.java, "ItemTrackingSystemDataBase"
-                ).fallbackToDestructiveMigration().addCallback(object : Callback() {
-                    override fun onCreate(db: SupportSQLiteDatabase) {
-//                        super.onCreate(db)
-//                        //check for null
-//
-//                        val itemEntity = ItemEntity(
-//                            itemName = "Number 1",
-//                        )
-//                        val item2 = itemEntity.copy(
-//                            itemName = "Number 2"
-//                        )
-//                        val item3 = itemEntity.copy(
-//                            itemName = "Number 3"
-//                        )
-//                        GlobalScope.launch {
-////                            INSTANCE?.getItemDao()?.addItem(itemEntity)
-////                            INSTANCE?.getItemDao()?.addItem(item2)
-////                            INSTANCE?.getItemDao()?.addItem(item3)
-//                        }
-                    }
-                }).build()
+                ).fallbackToDestructiveMigration().addCallback(
+                    object : Callback() {
+                        override fun onCreate(db: SupportSQLiteDatabase) {
+
+                        }
+                    },
+                ).build()
 
                 INSTANCE = instance
                 // return instance

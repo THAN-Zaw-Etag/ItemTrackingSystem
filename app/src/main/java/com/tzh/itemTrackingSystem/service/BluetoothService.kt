@@ -50,26 +50,6 @@ class BluetoothService(private val application: ItemTrackingSystemApplication) {
     private val bluetoothAdapter = BluetoothAdapter.getDefaultAdapter()
     private val bluetoothDeviceList = mutableListOf<BluetoothDevice>()
 
-//    @OptIn(DelicateCoroutinesApi::class)
-//    var mGattUpdateReceiver: GattUpdateReceiver = GattUpdateReceiver(
-//        updateConnectionState = {
-//            updateDeviceStatus(mBluetoothDeviceAddress, it)
-//        },
-//        serviceDiscover = {
-//            if (supportedGattServices != null) {
-//                GlobalScope.launch {
-//                    withContext(Dispatchers.IO){
-//                        displayGattServices(supportedGattServices)
-//                        setPower(DefaultPower.toInt())
-//                        setDefaultRegion()
-//                    }
-//                }
-//            }
-//        },
-//        displayData = ::displayData,
-//    )
-
-
     var mScanStateListener: MutableList<ScanStateListener> = mutableListOf()
     fun setScanStateListener(onScanStateListener: ScanStateListener) {
         mScanStateListener.add(onScanStateListener)

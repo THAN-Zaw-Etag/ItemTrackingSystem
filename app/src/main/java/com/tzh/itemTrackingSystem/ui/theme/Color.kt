@@ -16,13 +16,6 @@ val RFIDTextColor = Color(0xFF5A9E30)
 val Gradient1 = Color(0xFFF0D3F5)
 val Gradient2 = Color(0xFFC0EDF1)
 
-//val horizontalGradientBrush = Brush.horizontalGradient(
-//    colors = listOf(
-//        Gradient1,
-//        Gradient2
-//    )
-//)
-
 val gradientList = listOf(
     Gradient1,
     Gradient2
