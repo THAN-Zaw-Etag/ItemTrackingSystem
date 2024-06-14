@@ -58,7 +58,7 @@ abstract class ItemDao {
     abstract suspend fun getCategoryById(id: Int): Category
 
     @Query(
-        """SELECT  *, tblCategory.CategoryName FROM ${TableNameConstant.ITEM} 
+        """SELECT  *,tblItem.Description, tblCategory.CategoryName FROM ${TableNameConstant.ITEM} 
         LEFT JOIN tblCategory ON tblItem.CategoryId = tblCategory.CategoryId 
         WHERE tblItem.ItemId =:id """
     )

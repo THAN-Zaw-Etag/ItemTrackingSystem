@@ -217,7 +217,10 @@ private fun LazyItemScope.CardItem(
                 }
             },
             confirmButton = {
-                ElevatedButton(onClick = { delete(itemEntity) }) {
+                ElevatedButton(onClick = {
+                    delete(itemEntity)
+                    deleteId = null
+                }) {
                     Text(text = "Confirm")
                 }
 
