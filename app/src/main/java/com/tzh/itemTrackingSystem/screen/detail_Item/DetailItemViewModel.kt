@@ -21,8 +21,8 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-class DetailItemViewModel(private val itemId: Int, private val itemRepository: ItemRepository) : ViewModel(),
-    OnDataAvailableListener, ScanStateListener {
+class DetailItemViewModel(private val itemId: Int, private val itemRepository: ItemRepository) :
+    ViewModel(), OnDataAvailableListener, ScanStateListener {
 
     private val _uiState = MutableStateFlow(DetailUiState())
     val uiState: StateFlow<DetailUiState> get() = _uiState.asStateFlow()
@@ -31,13 +31,13 @@ class DetailItemViewModel(private val itemId: Int, private val itemRepository: I
         viewModelScope.launch {
             val itemEntity = itemRepository.findItemCategoryById(itemId)
             itemEntity?.let { item ->
+                Log.e("ITEM", item.toString())
                 _uiState.update {
-                    it.copy(
-                        item = item.itemEntity.toItemMapper().apply {
-                            categoryName = item.categoryName ?: ""
 
-                        }
-                    )
+                    it.copy(item = item.itemEntity.toItemMapper().apply {
+                        categoryName = item.categoryName ?: ""
+
+                    })
                 }
             }
         }
@@ -60,7 +60,8 @@ class DetailItemViewModel(private val itemId: Int, private val itemRepository: I
     }
 
     companion object {
-        class FACTORY(val itemId: Int, val itemRepository: ItemRepository) : ViewModelProvider.Factory {
+        class FACTORY(val itemId: Int, val itemRepository: ItemRepository) :
+            ViewModelProvider.Factory {
             override fun <T : ViewModel> create(modelClass: Class<T>): T {
                 return DetailItemViewModel(itemId, itemRepository = itemRepository) as T
             }

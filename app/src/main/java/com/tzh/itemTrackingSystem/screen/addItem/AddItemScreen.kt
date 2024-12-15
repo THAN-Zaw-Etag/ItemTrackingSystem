@@ -7,6 +7,8 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.MaterialTheme
@@ -63,11 +65,16 @@ fun AddItemScreen(
         }
     }
     Column(
-        verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+        modifier = Modifier
             .fillMaxSize()
             .padding(8.dp)
+            .verticalScroll(rememberScrollState())
     ) {
-        TitleText(if (uiState.editItemEntity == null) "ADD ITEM" else "EDIT ITEM", modifier = Modifier.fillMaxWidth())
+        TitleText(
+            if (uiState.editItemEntity == null) "ADD ITEM" else "EDIT ITEM",
+            modifier = Modifier.fillMaxWidth()
+        )
         TextFieldWithTitle(title = "Item Name", value = uiState.itemName) { text ->
             itemViewModel.updateItemName(text)
         }
@@ -82,7 +89,10 @@ fun AddItemScreen(
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             val style = MaterialTheme.typography.bodyMedium.copy(
-                textAlign = TextAlign.Justify, fontFamily = FontFamily.Serif, color = RFIDTextColor, fontWeight = FontWeight.Bold
+                textAlign = TextAlign.Justify,
+                fontFamily = FontFamily.Serif,
+                color = RFIDTextColor,
+                fontWeight = FontWeight.Bold
             )
             Text(
                 text = "Category", modifier = Modifier.weight(.3f), style = style
@@ -92,19 +102,24 @@ fun AddItemScreen(
                 list = uiState.categoryList.map { it.categoryName },
                 value = uiState.selectedCategory.categoryName
             ) { categoryName ->
-                uiState.categoryList.find { it.categoryName == categoryName }?.let { itemViewModel.selectedCategory(it) }
+                uiState.categoryList.find { it.categoryName == categoryName }
+                    ?.let { itemViewModel.selectedCategory(it) }
 
             }
         }
         Row(
-            horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
                 text = "For shop", style = MaterialTheme.typography.bodyMedium.copy(
-                    textAlign = TextAlign.Justify, fontFamily = FontFamily.Serif, fontWeight = FontWeight.Bold
+                    textAlign = TextAlign.Justify,
+                    fontFamily = FontFamily.Serif,
+                    fontWeight = FontWeight.Bold
                 )
             )
-            Checkbox(checked = uiState.isForShop, onCheckedChange = { itemViewModel.updateIsForShop() })
+            Checkbox(checked = uiState.isForShop,
+                onCheckedChange = { itemViewModel.updateIsForShop() })
             Spacer(modifier = Modifier.weight(1f))
             ElevatedButton(
                 onClick = {

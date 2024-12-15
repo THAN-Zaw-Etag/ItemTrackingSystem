@@ -106,13 +106,20 @@ fun ItemScreen(
 
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            SearchView(modifier = Modifier.weight(1f), defaultValue = uiState.searchText, label = "Search Item") {
+            SearchView(
+                modifier = Modifier.weight(1f),
+                defaultValue = uiState.searchText,
+                label = "Search Item"
+            ) {
                 viewModel.updateSearchText(it)
             }
             IconButton(onClick = {
                 showFilter = true
             }) {
-                Image(painter = painterResource(id = R.drawable.filter), contentDescription = "Filter")
+                Image(
+                    painter = painterResource(id = R.drawable.filter),
+                    contentDescription = "Filter"
+                )
             }
         }
         if (uiState.isLoading) {
@@ -122,8 +129,12 @@ fun ItemScreen(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = "Getting data please wait....", style = MaterialTheme.typography.headlineSmall.copy(
-                        color = Color.Red, fontFamily = FontFamily.Serif, letterSpacing = 4.sp, textAlign = TextAlign.Center
+                    text = "Getting data please wait....",
+                    style = MaterialTheme.typography.headlineSmall.copy(
+                        color = Color.Red,
+                        fontFamily = FontFamily.Serif,
+                        letterSpacing = 4.sp,
+                        textAlign = TextAlign.Center
                     )
                 )
                 CircularProgressIndicator(
@@ -134,12 +145,18 @@ fun ItemScreen(
 
         AnimatedVisibility(modifier = Modifier.weight(1f), visible = !uiState.isLoading) {
             if (itemList.isEmpty()) {
-                Column(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center) {
+                Column(
+                    modifier = Modifier.fillMaxSize(),
+                    verticalArrangement = Arrangement.Center
+                ) {
                     Text(
                         modifier = Modifier.fillMaxWidth(),
-                        text = "No data not found",
+                        text = "No data found",
                         style = MaterialTheme.typography.headlineSmall.copy(
-                            color = Color.Red, fontFamily = FontFamily.Serif, letterSpacing = 4.sp, textAlign = TextAlign.Center
+                            color = Color.Red,
+                            fontFamily = FontFamily.Serif,
+                            letterSpacing = 4.sp,
+                            textAlign = TextAlign.Center
                         )
                     )
                 }
@@ -168,7 +185,12 @@ fun ItemScreen(
 
 @OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
 @Composable
-private fun LazyItemScope.CardItem(itemEntity: Item, delete: (Item) -> Unit, editItem: (Item) -> Unit, onClick: () -> Unit) {
+private fun LazyItemScope.CardItem(
+    itemEntity: Item,
+    delete: (Item) -> Unit,
+    editItem: (Item) -> Unit,
+    onClick: () -> Unit
+) {
 
     var deleteId: Int? by remember { mutableStateOf(null) }
     val backgroundColor by animateColorAsState(
@@ -182,7 +204,12 @@ private fun LazyItemScope.CardItem(itemEntity: Item, delete: (Item) -> Unit, edi
     )
     if (deleteId != null) {
         AlertDialog(
-            icon = { Icon(imageVector = Icons.Default.Notifications, contentDescription = "Delete Alert") },
+            icon = {
+                Icon(
+                    imageVector = Icons.Default.Notifications,
+                    contentDescription = "Delete Alert"
+                )
+            },
             onDismissRequest = {},
             dismissButton = {
                 ElevatedButton(onClick = { deleteId = null }) {
@@ -190,7 +217,10 @@ private fun LazyItemScope.CardItem(itemEntity: Item, delete: (Item) -> Unit, edi
                 }
             },
             confirmButton = {
-                ElevatedButton(onClick = { delete(itemEntity) }) {
+                ElevatedButton(onClick = {
+                    delete(itemEntity)
+                    deleteId = null
+                }) {
                     Text(text = "Confirm")
                 }
 
@@ -226,7 +256,9 @@ private fun LazyItemScope.CardItem(itemEntity: Item, delete: (Item) -> Unit, edi
                 )
             )
             .padding(8.dp)
-            .fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = backgroundColor), onClick = onClick
+            .fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = backgroundColor),
+        onClick = onClick
     ) {
         Row(
             modifier = Modifier
@@ -235,7 +267,10 @@ private fun LazyItemScope.CardItem(itemEntity: Item, delete: (Item) -> Unit, edi
             horizontalArrangement = Arrangement.spacedBy(4.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Column(verticalArrangement = Arrangement.spacedBy(4.dp), modifier = Modifier.weight(1f)) {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(4.dp),
+                modifier = Modifier.weight(1f)
+            ) {
                 Text(
                     text = itemEntity.itemName, style = MaterialTheme.typography.headlineSmall.copy(
                         fontSize = 16.sp,
@@ -244,9 +279,11 @@ private fun LazyItemScope.CardItem(itemEntity: Item, delete: (Item) -> Unit, edi
                     ), modifier = Modifier.fillMaxWidth()
                 )
                 Text(
-                    text = (itemEntity.desc ?: "-").ifEmpty { "-" }, style = MaterialTheme.typography.bodyMedium.copy(
+                    text = (itemEntity.desc ?: "-").ifEmpty { "-" },
+                    style = MaterialTheme.typography.bodyMedium.copy(
                         textAlign = TextAlign.Justify,
-                    ), modifier = Modifier.fillMaxWidth()
+                    ),
+                    modifier = Modifier.fillMaxWidth()
                 )
                 Text(
                     buildAnnotatedString {
@@ -274,12 +311,20 @@ private fun LazyItemScope.CardItem(itemEntity: Item, delete: (Item) -> Unit, edi
                 IconButton(
                     onClick = { deleteId = itemEntity.id },
                 ) {
-                    Icon(imageVector = Icons.Default.Delete, contentDescription = "Delete", tint = Color.Red.copy(alpha = .4f))
+                    Icon(
+                        imageVector = Icons.Default.Delete,
+                        contentDescription = "Delete",
+                        tint = Color.Red.copy(alpha = .4f)
+                    )
                 }
                 IconButton(
                     onClick = { editItem(itemEntity) },
                 ) {
-                    Icon(imageVector = Icons.Default.Edit, contentDescription = "Delete", tint = Color.DarkGray.copy(alpha = .8f))
+                    Icon(
+                        imageVector = Icons.Default.Edit,
+                        contentDescription = "Delete",
+                        tint = Color.DarkGray.copy(alpha = .8f)
+                    )
                 }
             }
         }

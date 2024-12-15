@@ -21,7 +21,8 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-class ItemViewModel(private val repository: ItemRepository) : ViewModel(), OnDataAvailableListener, ScanStateListener {
+class ItemViewModel(private val repository: ItemRepository) : ViewModel(), OnDataAvailableListener,
+    ScanStateListener {
 
     var categoryList = mutableStateListOf<Category>()
 
@@ -30,7 +31,11 @@ class ItemViewModel(private val repository: ItemRepository) : ViewModel(), OnDat
 
     private val _uiState = MutableStateFlow(ItemScreenUiState())
 
-    val uiState = combine(_uiState, repository.getItemList(), repository.getItemsCategory()) { itemUiState, list, cList ->
+    val uiState = combine(
+        _uiState,
+        repository.getItemList(),
+        repository.getItemsCategory()
+    ) { itemUiState, list, cList ->
         val filterList = list.filter { item ->
             if (itemUiState.searchText.isNotEmpty()) {
                 item.itemName.contains(itemUiState.searchText, true)
@@ -75,6 +80,7 @@ class ItemViewModel(private val repository: ItemRepository) : ViewModel(), OnDat
         viewModelScope.launch {
             try {
                 repository.deleteItem(id)
+                itemList.forEach { if (it.id == id) itemList.remove(it) }
                 successListener()
             } catch (e: Exception) {
                 showToast(e.message.toString())
